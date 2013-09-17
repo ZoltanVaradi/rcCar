@@ -1,0 +1,96 @@
+<RelativeLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/textViewStat"
+        android:layout_gravity="left|center_vertical"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp"
+        android:layout_alignParentTop="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/defaultGataway"
+        android:id="@+id/checkBoxGateway"
+        android:layout_gravity="left|center_vertical"
+        android:layout_below="@+id/textViewStat"
+        android:layout_alignParentLeft="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/editTextInput"
+        android:layout_gravity="left|center_vertical"
+        android:text="@string/localIPcim"
+        android:layout_below="@+id/checkBoxGateway"
+        android:layout_alignParentLeft="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connectToServer"
+        android:id="@+id/button"
+        android:layout_gravity="left|center_vertical"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/seekBarGaz"
+        android:layout_marginRight="33dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textViewGaz"
+        android:layout_gravity="left|center_vertical"
+        android:layout_marginTop="57dp"
+        android:layout_below="@+id/editTextInput"
+        android:layout_alignLeft="@+id/seekBarGaz" />
+
+    <SeekBar
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarGaz"
+        android:layout_gravity="left|center_vertical"
+        android:max="50"
+        android:rotation="270"
+        android:progress="25"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_marginBottom="35dp"
+        android:layout_above="@+id/seekBarKormany"
+        android:layout_alignParentRight="true" />
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/textViewKormany"
+        android:layout_gravity="left|center_vertical"
+        android:layout_above="@+id/seekBarKormany"
+        android:layout_alignRight="@+id/editTextInput" />
+
+    <SeekBar
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarKormany"
+        android:layout_gravity="left|center_vertical"
+        android:max="50"
+        android:progress="25"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="58dp" />
+
+</RelativeLayout>
+
