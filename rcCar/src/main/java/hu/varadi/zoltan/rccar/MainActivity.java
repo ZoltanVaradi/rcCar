@@ -25,16 +25,13 @@ public class MainActivity extends Activity {
     private View.OnClickListener buttonOnClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Intent mIntent=null;
-            switch (v.getId()) {
-                case R.id.imageButtonServer:
-                    mIntent = new Intent(getApplicationContext(), ServerActivity.class);
-                    break;
-                case R.id.imageButtonClient:
-                    mIntent = new Intent(getApplicationContext(), ClientActivity.class);
-                    break;
+            Intent mIntent = null;
+            if (v.getId() == R.id.imageButtonServer) {
+                mIntent = new Intent(getApplicationContext(), ServerActivity.class);
+            } else if (v.getId() == R.id.imageButtonClient) {
+                mIntent = new Intent(getApplicationContext(), ClientActivity.class);
             }
-           startActivity(mIntent);
+            startActivity(mIntent);
         }
     };
 

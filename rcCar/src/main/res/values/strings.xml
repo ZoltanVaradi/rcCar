@@ -4,7 +4,7 @@
     <string name="app_name">rcCar</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    <string name="saveClick">Kattintás megjegyzése</string>
+    <string name="saveClick">Választás megjegyzése</string>
     <string name="title_activity_server">Szerver</string>
     <string name="title_activity_client">Kliens</string>
     <string name="startServer">Start Szerver</string>

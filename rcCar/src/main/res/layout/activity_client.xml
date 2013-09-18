@@ -36,7 +36,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/connectToServer"
-        android:id="@+id/button"
+        android:id="@+id/buttonConnect"
         android:layout_gravity="left|center_vertical"
         android:layout_marginRight="10dp"
         android:layout_alignTop="@+id/checkBoxGateway"

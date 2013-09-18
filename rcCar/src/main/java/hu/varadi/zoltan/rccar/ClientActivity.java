@@ -3,6 +3,7 @@ package hu.varadi.zoltan.rccar;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.app.Activity;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -26,7 +27,6 @@ import java.nio.ByteOrder;
 public class ClientActivity extends Activity {
 
     private Socket socket;
-
     private static final int SERVERPORT = 6000;
     private static final int SEEKBAR_DEFAULT_VALUE = 25;
     private static String SERVER_IP;
@@ -34,7 +34,11 @@ public class ClientActivity extends Activity {
     WifiManager wifii;
     private TextView tvGaz;
     private TextView tvKorm;
+    private CheckBox cbGata;
+    private Button bntConnect;
     private Thread clientThread;
+    private Handler updateConversationHandler;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,58 +46,65 @@ public class ClientActivity extends Activity {
         setContentView(R.layout.activity_client);
 
         wifii = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
-        TextView textStatus = (TextView) findViewById(R.id.textViewStat);
 
-        SeekBar sbKorm = (SeekBar) findViewById(R.id.seekBarKormany);
-        SeekBar sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
         tvGaz = (TextView) findViewById(R.id.textViewGaz);
         tvKorm = (TextView) findViewById(R.id.textViewKormany);
+        et = (EditText) findViewById(R.id.editTextInput);
+        cbGata = (CheckBox) findViewById(R.id.checkBoxGateway);
+        bntConnect = (Button) findViewById(R.id.buttonConnect);
+        Button bnt = (Button) findViewById(R.id.button);
+        SeekBar sbKorm = (SeekBar) findViewById(R.id.seekBarKormany);
+        SeekBar sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
+
+        clientThread = new Thread(new ClientThread());
+        updateConversationHandler = new Handler();
 
         sbKorm.setOnSeekBarChangeListener(sbListener);
-
         sbGaz.setOnSeekBarChangeListener(sbListener);
+        bnt.setOnClickListener(buttonOnClick);
+    }
 
+    private Button.OnClickListener buttonOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
 
-        et = (EditText) findViewById(R.id.editTextInput);
+            if (cbGata.isChecked()) {
+                int gw = wifii.getDhcpInfo().gateway;
+                SERVER_IP = ipAddressToString(gw);
+            } else {
+                SERVER_IP = et.getText().toString();
+            }
+
+            if (clientThread.getState() == Thread.State.NEW) {
+                clientThread.start();
+
+            }else if(socket==null){
+                clientThread = new Thread(new ClientThread());
+                clientThread.start();
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "clientThread.state nem new", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        TextView textStatus = (TextView) findViewById(R.id.textViewStat);
         int gw = wifii.getDhcpInfo().gateway;
-        int ip = wifii.getDhcpInfo().ipAddress;
-
+        int ip = wifii.getConnectionInfo().getIpAddress();
         String textViewString = "";
+        textViewString += "Wifi enabled:            " + wifii.isWifiEnabled() + "\n";
         textViewString += "My ip:            " + ipAddressToString(ip) + "\n";
         textViewString += "Default gateway:  " + ipAddressToString(gw) + "\n";
-        textViewString += "Conected AP name: " + wifii.getConnectionInfo().getSSID() + "\n";
-        textViewString += "LinkSpeed:        " + wifii.getConnectionInfo().getLinkSpeed();
-
+        textViewString += "Connected AP name: " + wifii.getConnectionInfo().getSSID();
         textStatus.setText(textViewString);
 
         SERVER_IP = ipAddressToString(gw);
-
-
-        clientThread = new Thread(new ClientThread());
-
-
-        Button bnt = (Button) findViewById(R.id.button);
-        bnt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                CheckBox cbGata = (CheckBox) findViewById(R.id.checkBoxGateway);
-                if (cbGata.isChecked()) {
-                    int gw = wifii.getDhcpInfo().gateway;
-                    SERVER_IP = ipAddressToString(gw);
-                } else {
-                    SERVER_IP = et.getText().toString();
-                }
-                if (clientThread.getState()==Thread.State.NEW) {
-                    clientThread.start();
-                    Toast.makeText(getApplicationContext(), "Kapcsi papcsi talán él", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getApplicationContext(), "clientThread.state nem new", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-        });
     }
-
 
     class ClientThread implements Runnable {
 
@@ -105,19 +116,36 @@ public class ClientActivity extends Activity {
 
                 socket = new Socket(serverAddr, SERVERPORT);
 
+                updateConversationHandler.post(new showToastThread("Kapcsi papcsi talán él"));
             } catch (UnknownHostException e1) {
-                Log.d("unkoncHost", "e1");
+                Log.d("UnknownHostException", "e1");
+                updateConversationHandler.post(new showToastThread(e1.getMessage()));
                 e1.printStackTrace();
             } catch (IOException e1) {
+                updateConversationHandler.post(new showToastThread(e1.getMessage()));
                 e1.printStackTrace();
             }
+        }
+    }
 
+    class showToastThread implements Runnable {
+        private String msg;
+
+        public showToastThread(String str) {
+            this.msg = str;
+        }
+
+        @Override
+        public void run() {
+            if (msg != null) {
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     private void sendDataToServer(String data) {
         if (socket == null) {
-            Toast.makeText(getApplicationContext(), "Socket is null", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "Socket is null", Toast.LENGTH_SHORT).show();
         } else {
             try {
                 PrintWriter out = new PrintWriter(new BufferedWriter(
