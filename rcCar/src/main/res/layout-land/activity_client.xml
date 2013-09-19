@@ -39,8 +39,9 @@
         android:id="@+id/button"
         android:layout_gravity="left|center_vertical"
         android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/seekBarGaz"
-        android:layout_marginRight="33dp" />
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="5dp" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -48,10 +49,9 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Medium Text"
         android:id="@+id/textViewGaz"
-        android:layout_gravity="left|center_vertical"
-        android:layout_marginTop="57dp"
-        android:layout_below="@+id/editTextInput"
-        android:layout_alignLeft="@+id/seekBarGaz" />
+        android:layout_alignBottom="@+id/seekBarGaz"
+        android:layout_alignLeft="@+id/button"
+        android:layout_marginLeft="30dp" />
 
     <SeekBar
         android:layout_width="350dp"
@@ -63,9 +63,9 @@
         android:progress="25"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
-        android:layout_marginBottom="35dp"
-        android:layout_above="@+id/seekBarKormany"
-        android:layout_alignParentRight="true" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="140dp"/>
 
 
 
@@ -88,9 +88,9 @@
         android:progress="25"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_marginBottom="58dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"/>
 
 </RelativeLayout>
 

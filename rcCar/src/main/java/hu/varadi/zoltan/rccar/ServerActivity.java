@@ -32,12 +32,14 @@ public class ServerActivity extends Activity {
     private ServerSocket serverSocket;
     public static final int SERVERPORT = 6000;
     Handler updateConversationHandler;
-    Thread serverThread = null;
+    private Thread serverThread = null;
     private TextView textViewStatus;
     private TextView textViewGaz;
     private TextView textViewKormany;
     private Button btn;
     private WifiManager wifii;
+    private Thread commThread;
+    private boolean commThreadRun=true;
 
     public WifiConfiguration getWifiApConfiguration() {
         try {
@@ -106,6 +108,17 @@ public class ServerActivity extends Activity {
         return true;
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            serverSocket.close();
+            commThreadRun=false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     protected String ipAddressToString(int ipAddress) {
 
 
@@ -146,22 +159,22 @@ public class ServerActivity extends Activity {
                     }
                 });
 
-                while (!Thread.currentThread().isInterrupted()) {
 
-                    try {
+                try {
 
-                        socket = serverSocket.accept();
+                    socket = serverSocket.accept();
 
-                        updateConversationHandler.post(new showToastThread(socket.getRemoteSocketAddress().toString()));
+                    updateConversationHandler.post(new showToastThread(socket.getRemoteSocketAddress().toString()));
 
-                        CommunicationThread commThread = new CommunicationThread(socket);
-                        new Thread(commThread).start();
+                    commThread = new Thread(new CommunicationThread(socket));
+                    commThread.start();
 
+                    serverSocket.close();
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
                 updateConversationHandler.post(new showToastThread(e.getLocalizedMessage()));
@@ -190,7 +203,7 @@ public class ServerActivity extends Activity {
 
         public void run() {
 
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && commThreadRun) {
 
                 try {
 
@@ -201,6 +214,12 @@ public class ServerActivity extends Activity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            try {
+                input.close();
+                this.clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

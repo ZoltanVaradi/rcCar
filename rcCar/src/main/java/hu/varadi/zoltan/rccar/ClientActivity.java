@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
@@ -38,6 +39,8 @@ public class ClientActivity extends Activity {
     private Button bntConnect;
     private Thread clientThread;
     private Handler updateConversationHandler;
+
+    private static final String LogTag="nyuszika";
 
 
     @Override
@@ -62,6 +65,16 @@ public class ClientActivity extends Activity {
         sbKorm.setOnSeekBarChangeListener(sbListener);
         sbGaz.setOnSeekBarChangeListener(sbListener);
         bnt.setOnClickListener(buttonOnClick);
+        cbGata.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (cbGata.isChecked()) {
+                    et.setEnabled(false);
+                } else {
+                    et.setEnabled(true);
+                }
+            }
+        });
     }
 
     private Button.OnClickListener buttonOnClick = new View.OnClickListener() {
@@ -78,11 +91,10 @@ public class ClientActivity extends Activity {
             if (clientThread.getState() == Thread.State.NEW) {
                 clientThread.start();
 
-            }else if(socket==null){
+            } else if (socket == null) {
                 clientThread = new Thread(new ClientThread());
                 clientThread.start();
-            }
-            else {
+            } else {
                 Toast.makeText(getApplicationContext(), "clientThread.state nem new", Toast.LENGTH_SHORT).show();
             }
 
@@ -116,6 +128,7 @@ public class ClientActivity extends Activity {
 
                 socket = new Socket(serverAddr, SERVERPORT);
 
+
                 updateConversationHandler.post(new showToastThread("Kapcsi papcsi talán él"));
             } catch (UnknownHostException e1) {
                 Log.d("UnknownHostException", "e1");
@@ -143,15 +156,33 @@ public class ClientActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     private void sendDataToServer(String data) {
+        Log.e(LogTag,"-----------------------------------------");
+
         if (socket == null) {
             //Toast.makeText(getApplicationContext(), "Socket is null", Toast.LENGTH_SHORT).show();
+            Log.e(LogTag, "Socket is null");
         } else {
+            Log.e(LogTag, socket.isConnected()+"");
             try {
                 PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(socket.getOutputStream())),
                         true);
                 out.println(data);
+                Log.e(LogTag, out.checkError()+"");
+
+
 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
