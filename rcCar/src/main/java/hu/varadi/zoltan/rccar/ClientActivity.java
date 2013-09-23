@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.os.Handler;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -21,41 +20,38 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
 public class ClientActivity extends Activity {
 
+    private static final String LOG_TAG = "nyuszika";
+
+    private int SERVERPORT = 6000;
+    private int SEEKBAR_DEFAULT_VALUE = 25;
+    private String SERVER_IP;
     private Socket socket;
-    private static final int SERVERPORT = 6000;
-    private static final int SEEKBAR_DEFAULT_VALUE = 25;
-    private static String SERVER_IP;
-    EditText et;
-    WifiManager wifii;
-    private TextView tvGaz;
-    private TextView tvKorm;
-    private CheckBox cbGata;
+    private EditText editTextIpAddress;
+    private WifiManager wifiManager;
+    private TextView textViewGaz;
+    private TextView TextViewKormany;
+    private CheckBox checkBoxDefaultGataway;
     private Button bntConnect;
     private Thread clientThread;
     private Handler updateConversationHandler;
-
-    private static final String LogTag="nyuszika";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client);
 
-        wifii = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
+        wifiManager = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
 
-        tvGaz = (TextView) findViewById(R.id.textViewGaz);
-        tvKorm = (TextView) findViewById(R.id.textViewKormany);
-        et = (EditText) findViewById(R.id.editTextInput);
-        cbGata = (CheckBox) findViewById(R.id.checkBoxGateway);
+        textViewGaz = (TextView) findViewById(R.id.textViewGaz);
+        TextViewKormany = (TextView) findViewById(R.id.textViewKormany);
+        editTextIpAddress = (EditText) findViewById(R.id.editTextIP);
+        checkBoxDefaultGataway = (CheckBox) findViewById(R.id.checkBoxGateway);
         bntConnect = (Button) findViewById(R.id.buttonConnect);
-        Button bnt = (Button) findViewById(R.id.button);
         SeekBar sbKorm = (SeekBar) findViewById(R.id.seekBarKormany);
         SeekBar sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
 
@@ -64,14 +60,24 @@ public class ClientActivity extends Activity {
 
         sbKorm.setOnSeekBarChangeListener(sbListener);
         sbGaz.setOnSeekBarChangeListener(sbListener);
-        bnt.setOnClickListener(buttonOnClick);
-        cbGata.setOnClickListener(new View.OnClickListener() {
+
+        try {
+
+
+            Log.e(LOG_TAG, bntConnect == null ? "true" : "false");
+            bntConnect.setOnClickListener(buttonOnClick);
+        } catch (Exception ex) {
+            Log.e(LOG_TAG, ex.getMessage());
+
+        }
+
+        checkBoxDefaultGataway.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (cbGata.isChecked()) {
-                    et.setEnabled(false);
+                if (checkBoxDefaultGataway.isChecked()) {
+                    editTextIpAddress.setEnabled(false);
                 } else {
-                    et.setEnabled(true);
+                    editTextIpAddress.setEnabled(true);
                 }
             }
         });
@@ -81,11 +87,11 @@ public class ClientActivity extends Activity {
         @Override
         public void onClick(View view) {
 
-            if (cbGata.isChecked()) {
-                int gw = wifii.getDhcpInfo().gateway;
+            if (checkBoxDefaultGataway.isChecked()) {
+                int gw = wifiManager.getDhcpInfo().gateway;
                 SERVER_IP = ipAddressToString(gw);
             } else {
-                SERVER_IP = et.getText().toString();
+                SERVER_IP = editTextIpAddress.getText().toString();
             }
 
             if (clientThread.getState() == Thread.State.NEW) {
@@ -106,13 +112,13 @@ public class ClientActivity extends Activity {
         super.onStart();
 
         TextView textStatus = (TextView) findViewById(R.id.textViewStat);
-        int gw = wifii.getDhcpInfo().gateway;
-        int ip = wifii.getConnectionInfo().getIpAddress();
+        int gw = wifiManager.getDhcpInfo().gateway;
+        int ip = wifiManager.getConnectionInfo().getIpAddress();
         String textViewString = "";
-        textViewString += "Wifi enabled:            " + wifii.isWifiEnabled() + "\n";
+        textViewString += "Wifi enabled:            " + wifiManager.isWifiEnabled() + "\n";
         textViewString += "My ip:            " + ipAddressToString(ip) + "\n";
         textViewString += "Default gateway:  " + ipAddressToString(gw) + "\n";
-        textViewString += "Connected AP name: " + wifii.getConnectionInfo().getSSID();
+        textViewString += "Connected AP name: " + wifiManager.getConnectionInfo().getSSID();
         textStatus.setText(textViewString);
 
         SERVER_IP = ipAddressToString(gw);
@@ -160,7 +166,9 @@ public class ClientActivity extends Activity {
     protected void onStop() {
         super.onStop();
         try {
-            socket.close();
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -168,20 +176,19 @@ public class ClientActivity extends Activity {
     }
 
     private void sendDataToServer(String data) {
-        Log.e(LogTag,"-----------------------------------------");
+        Log.e(LOG_TAG, "-----------------------------------------");
 
         if (socket == null) {
             //Toast.makeText(getApplicationContext(), "Socket is null", Toast.LENGTH_SHORT).show();
-            Log.e(LogTag, "Socket is null");
+            Log.e(LOG_TAG, "Socket is null");
         } else {
-            Log.e(LogTag, socket.isConnected()+"");
+            Log.e(LOG_TAG, socket.isConnected() + "");
             try {
                 PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(socket.getOutputStream())),
                         true);
                 out.println(data);
-                Log.e(LogTag, out.checkError()+"");
-
+                Log.e(LOG_TAG, out.checkError() + "");
 
 
             } catch (UnknownHostException e) {
@@ -202,11 +209,11 @@ public class ClientActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 switch (seekBar.getId()) {
                     case R.id.seekBarGaz:
-                        tvGaz.setText(progress + "");
+                        textViewGaz.setText(progress + "");
                         sendDataToServer("g:" + progress);
                         break;
                     case R.id.seekBarKormany:
-                        tvKorm.setText(progress + "");
+                        TextViewKormany.setText(progress + "");
                         sendDataToServer("k:" + progress);
                         break;
                 }

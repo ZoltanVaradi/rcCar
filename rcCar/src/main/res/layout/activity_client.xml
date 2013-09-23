@@ -20,16 +20,16 @@
         android:text="@string/defaultGataway"
         android:id="@+id/checkBoxGateway"
         android:layout_gravity="left|center_vertical"
-        android:layout_below="@+id/textViewStat"
+        android:layout_below="@id/textViewStat"
         android:layout_alignParentLeft="true" />
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/editTextInput"
+        android:id="@+id/editTextIP"
         android:layout_gravity="left|center_vertical"
         android:text="@string/localIPcim"
-        android:layout_below="@+id/checkBoxGateway"
+        android:layout_below="@id/checkBoxGateway"
         android:layout_alignParentLeft="true" />
 
     <Button
@@ -37,9 +37,8 @@
         android:layout_height="wrap_content"
         android:text="@string/connectToServer"
         android:id="@+id/buttonConnect"
-        android:layout_gravity="left|center_vertical"
+        android:layout_gravity="right|center_vertical"
         android:layout_marginRight="10dp"
-        android:layout_alignTop="@+id/checkBoxGateway"
         android:layout_alignParentRight="true" />
 
     <TextView
@@ -48,20 +47,22 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Medium Text"
         android:id="@+id/textViewGaz"
-        android:layout_gravity="left|center_vertical"
+        android:layout_gravity="right"
+        android:layout_alignParentRight="true"
         android:layout_above="@+id/seekBarGaz"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="10dp" />
+        android:layout_marginRight="15dp" />
 
     <SeekBar
-        android:layout_width="fill_parent"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:id="@+id/seekBarGaz"
         android:layout_gravity="left|center_vertical"
         android:max="50"
         android:progress="25"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
+        android:rotation="270"
+        android:layout_marginBottom="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
         android:paddingTop="10dp"
         android:paddingBottom="10dp" />
 
@@ -77,7 +78,7 @@
         android:layout_marginLeft="10dp" />
 
     <SeekBar
-        android:layout_width="fill_parent"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:id="@+id/seekBarKormany"
         android:layout_gravity="left|center_vertical"
@@ -89,6 +90,4 @@
         android:paddingTop="10dp"
         android:paddingBottom="10dp" />
 
-
 </RelativeLayout>
-

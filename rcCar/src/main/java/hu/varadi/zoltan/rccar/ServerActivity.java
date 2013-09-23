@@ -39,7 +39,7 @@ public class ServerActivity extends Activity {
     private Button btn;
     private WifiManager wifii;
     private Thread commThread;
-    private boolean commThreadRun=true;
+    private boolean commThreadRun = true;
 
     public WifiConfiguration getWifiApConfiguration() {
         try {
@@ -112,16 +112,16 @@ public class ServerActivity extends Activity {
     protected void onStop() {
         super.onStop();
         try {
-            serverSocket.close();
-            commThreadRun=false;
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            commThreadRun = false;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     protected String ipAddressToString(int ipAddress) {
-
-
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
             ipAddress = Integer.reverseBytes(ipAddress);
         }

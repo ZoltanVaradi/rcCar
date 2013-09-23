@@ -4,33 +4,33 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ImageButton
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="150dp"
         android:scaleType="fitCenter"
         android:id="@+id/imageButtonServer"
         android:src="@drawable/server"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_marginTop="15dp"
-        android:layout_alignParentRight="true" />
+        android:layout_margin="5dp" />
 
     <ImageButton
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="150dp"
         android:scaleType="fitCenter"
         android:id="@+id/imageButtonClient"
         android:src="@drawable/client"
         android:layout_below="@+id/imageButtonServer"
         android:layout_alignParentLeft="true"
-        android:layout_marginTop="20dp"
-        android:layout_alignParentRight="true" />
+        android:layout_margin="5dp" />
 
     <CheckBox
         android:layout_width="350dp"
         android:layout_height="wrap_content"
         android:text="@string/saveClick"
         android:id="@+id/checkBox"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginLeft="5dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true" />
+
 </RelativeLayout>
