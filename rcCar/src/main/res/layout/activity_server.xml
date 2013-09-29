@@ -15,6 +15,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textViewStatus"
+        android:text="@string/networkStatus"
+        android:layout_gravity="left|center_vertical" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textViewStatusConnect"
+        android:text="@string/usbConnectNO"
         android:layout_gravity="left|center_vertical" />
 
     <TextView

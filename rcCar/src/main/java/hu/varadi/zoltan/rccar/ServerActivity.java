@@ -1,10 +1,18 @@
 package hu.varadi.zoltan.rccar;
 
 import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -13,6 +21,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
@@ -24,8 +35,24 @@ import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
 
-public class ServerActivity extends Activity {
+public class ServerActivity extends Activity implements Runnable {
 
+    private static final String TAG = "rcCar_server";
+
+    private static final String ACTION_USB_PERMISSION = "com.example.usbteszt1.USB_PERMISSION";
+    private static final byte COMMAND_KORMANY = 0x3;
+    private static final byte COMMAND_GAZ = 0x2;
+
+    private PendingIntent mPermissionIntent;
+    private boolean mPermissionRequestPending;
+
+    private UsbManager mUsbManager;
+    private UsbAccessory mAccessory;
+
+    ParcelFileDescriptor mFileDescriptor;
+
+    FileInputStream mInputStream;
+    FileOutputStream mOutputStream;
 
     ServerSocket server;
 
@@ -34,6 +61,7 @@ public class ServerActivity extends Activity {
     Handler updateConversationHandler;
     private Thread serverThread = null;
     private TextView textViewStatus;
+    private TextView mStatusView;
     private TextView textViewGaz;
     private TextView textViewKormany;
     private Button btn;
@@ -53,10 +81,31 @@ public class ServerActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+
+
+        // Broadcast Intent for myPermission
+        mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+
+        // Register Intent myPermission and remove accessory
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_USB_PERMISSION);
+        filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+        registerReceiver(mUsbReceiver, filter);
+
+/////////////////////////////////////////////////////////////////////////////
+        if (getLastNonConfigurationInstance() != null) {
+            mAccessory = (UsbAccessory) getLastNonConfigurationInstance();
+            openAccessory(mAccessory);
+        }
+/////////////////////////////////////////////////////////////////////////////
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_server);
 
         textViewStatus = (TextView) findViewById(R.id.textViewStatus);
+        mStatusView = (TextView) findViewById(R.id.textViewStatusConnect);
         textViewGaz = (TextView) findViewById(R.id.textViewGaz);
         textViewKormany = (TextView) findViewById(R.id.textViewKormany);
         btn = (Button) findViewById(R.id.buttonServer);
@@ -97,7 +146,7 @@ public class ServerActivity extends Activity {
             }
         });
 
-
+        enableControls(false);
     }
 
 
@@ -119,6 +168,44 @@ public class ServerActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (mInputStream != null && mOutputStream != null) {
+            return;
+        }
+
+        UsbAccessory[] accessories = mUsbManager.getAccessoryList();
+        UsbAccessory accessory = (accessories == null ? null : accessories[0]);
+        if (accessory != null) {
+            if (mUsbManager.hasPermission(accessory)) {
+                openAccessory(accessory);
+            } else {
+                synchronized (mUsbReceiver) {
+                    if (!mPermissionRequestPending) {
+                        mUsbManager.requestPermission(accessory, mPermissionIntent);
+                        mPermissionRequestPending = true;
+                    }
+                }
+            }
+        } else {
+            Log.d(TAG, "mAccessory is nullq1");
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        closeAccessory();
+    }
+
+    @Override
+    public void onDestroy() {
+        unregisterReceiver(mUsbReceiver);
+        super.onDestroy();
     }
 
     protected String ipAddressToString(int ipAddress) {
@@ -211,6 +298,18 @@ public class ServerActivity extends Activity {
 
                     updateConversationHandler.post(new updateUIThread(read));
 
+                    String[] sl = read.split(":");
+                    if (sl.length == 2) {
+                        byte value =Byte.parseByte(sl[1]);
+                        byte command = 0x0;
+                        if (sl[0].equalsIgnoreCase("k")) {
+                            command = COMMAND_KORMANY;
+                        } else   if (sl[0].equalsIgnoreCase("g")) {
+                            command = COMMAND_GAZ;
+                        }
+                        sendCommand(command, value);
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -258,4 +357,112 @@ public class ServerActivity extends Activity {
         }
     }
 
+    private void openAccessory(UsbAccessory accessory) {
+        mFileDescriptor = mUsbManager.openAccessory(accessory);
+
+        if (mFileDescriptor != null) {
+            mAccessory = accessory;
+            FileDescriptor fd = mFileDescriptor.getFileDescriptor();
+
+            mInputStream = new FileInputStream(fd);
+            mOutputStream = new FileOutputStream(fd);
+
+            // communication thread start
+            Thread thread = new Thread(null, this, "DemoKit");
+            thread.start();
+            Log.d(TAG, "accessory opened");
+
+            enableControls(true);
+        } else {
+            Log.d(TAG, "accessory open fail");
+        }
+    }
+
+    private void closeAccessory() {
+        enableControls(false);
+
+        try {
+            if (mFileDescriptor != null) {
+                mFileDescriptor.close();
+            }
+        } catch (IOException e) {
+        } finally {
+            mFileDescriptor = null;
+            mAccessory = null;
+        }
+    }
+
+    private void enableControls(boolean enable) {
+        if (enable) {
+            mStatusView.setText(R.string.usbConnectOK);
+        } else {
+            mStatusView.setText(R.string.usbConnectNO);
+        }
+    }
+
+    public void sendCommand(byte command, byte value) {
+        byte[] buffer = new byte[2];
+        buffer[0] = command;
+        buffer[1] = value;
+        if (mOutputStream != null) {
+            try {
+                mOutputStream.write(buffer);
+            } catch (IOException e) {
+                Log.e(TAG, "write failed", e);
+            }
+        }
+    }
+
+    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "action " + action);
+            if (ACTION_USB_PERMISSION.equals(action)) {
+                synchronized (this) {
+                    UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        openAccessory(accessory);
+                    } else {
+                        Log.d(TAG, "permission denied for accessory " + accessory);
+                    }
+                    mPermissionRequestPending = false;
+                }
+            } else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+                UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                if (accessory != null && accessory.equals(mAccessory)) {
+                    closeAccessory();
+                }
+            }
+        }
+    };
+
+    // USB read thread
+    @Override
+    public void run() {
+        int ret = 0;
+        byte[] buffer = new byte[16384];
+        int i;
+
+        // Accessory -> Android
+        while (ret >= 0) {
+            try {
+                ret = mInputStream.read(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+                break;
+            }
+
+            i = 0;
+            Log.d(TAG, "---------- read usb data begin ----------");
+            while (i < ret) {
+                Log.d(TAG, "read usb" + buffer[i]);
+                i++;
+            }
+            Log.d(TAG, "---------- read usb data end ----------");
+
+        }
+    }
 }

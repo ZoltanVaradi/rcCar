@@ -12,5 +12,8 @@
     <string name="connectToServer">Csatlakozás</string>
     <string name="defaultGataway">Közvetlen kapcsolat</string>
     <string name="localIPcim">192.168.1.104</string>
+    <string name="usbConnectOK">USB kapcsolat létrehozva</string>
+    <string name="usbConnectNO">Nincs USB kapcsolat</string>
+    <string name="networkStatus">Hálózat információk</string>
 
 </resources>
