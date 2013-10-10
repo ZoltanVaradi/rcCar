@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -117,13 +118,26 @@ public class ServerActivity extends Activity implements Runnable {
         String textViewString = "";
 
         textViewString += "AP name: " + wc.SSID + "\n";
-        textViewString += "Ip address: " + ipAddressToString(wifii.getDhcpInfo().ipAddress);
+        textViewString += "Ip address: " +
+
+                ipAddressToString(wifii.getDhcpInfo()
+
+                        .ipAddress);
         textViewStatus.setText(textViewString);
 
-        updateConversationHandler = new Handler();
-        this.serverThread = new Thread(new ServerThread());
+        updateConversationHandler = new
 
-        btn.setOnClickListener(new View.OnClickListener() {
+                Handler();
+
+        this.serverThread = new
+
+                Thread(new ServerThread()
+
+        );
+
+        btn.setOnClickListener(new View.OnClickListener()
+
+        {
             @Override
             public void onClick(View v) {
                 try {
@@ -144,7 +158,9 @@ public class ServerActivity extends Activity implements Runnable {
                     Log.e("ex bnt ", ex.getLocalizedMessage());
                 }
             }
-        });
+        }
+
+        );
 
         enableControls(false);
     }
@@ -300,11 +316,11 @@ public class ServerActivity extends Activity implements Runnable {
 
                     String[] sl = read.split(":");
                     if (sl.length == 2) {
-                        byte value =Byte.parseByte(sl[1]);
+                        byte value = Byte.parseByte(sl[1]);
                         byte command = 0x0;
                         if (sl[0].equalsIgnoreCase("k")) {
                             command = COMMAND_KORMANY;
-                        } else   if (sl[0].equalsIgnoreCase("g")) {
+                        } else if (sl[0].equalsIgnoreCase("g")) {
                             command = COMMAND_GAZ;
                         }
                         sendCommand(command, value);
@@ -355,6 +371,7 @@ public class ServerActivity extends Activity implements Runnable {
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
             }
         }
+
     }
 
     private void openAccessory(UsbAccessory accessory) {

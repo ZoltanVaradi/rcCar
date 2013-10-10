@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
         ibServer.setOnClickListener(buttonOnClick);
         ibClient.setOnClickListener(buttonOnClick);
 
+
     }
 
     private View.OnClickListener buttonOnClick = new View.OnClickListener() {

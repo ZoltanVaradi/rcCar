@@ -29,16 +29,21 @@ public class ClientActivity extends Activity {
 
     private int SERVERPORT = 6000;
     private int SEEKBAR_DEFAULT_VALUE = 25;
+    private int SEEKBAR_BASE_VALUE = 25;
+    private int SEEKBAR_GAZ_MAX_VALUE = 50;
     private String SERVER_IP;
     private Socket socket;
     private EditText editTextIpAddress;
     private WifiManager wifiManager;
     private TextView textViewGaz;
     private TextView TextViewKormany;
+    private TextView tvGazMaxValue;
     private CheckBox checkBoxDefaultGataway;
     private Button bntConnect;
     private Thread clientThread;
     private Handler updateConversationHandler;
+    private SeekBar sbGaz;
+    private SeekBar sbGazMax;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,13 +58,14 @@ public class ClientActivity extends Activity {
         checkBoxDefaultGataway = (CheckBox) findViewById(R.id.checkBoxGateway);
         bntConnect = (Button) findViewById(R.id.buttonConnect);
         SeekBar sbKorm = (SeekBar) findViewById(R.id.seekBarKormany);
-        SeekBar sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
-
+        sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
+        sbGazMax = (SeekBar) findViewById(R.id.seekBarGazMax);
         clientThread = new Thread(new ClientThread());
         updateConversationHandler = new Handler();
+        tvGazMaxValue = (TextView) findViewById(R.id.textViewGazMax);
+        tvGazMaxValue.setText(getString(R.string.gazMaxValue) + "(" + sbGazMax.getProgress() + ")");
 
         sbKorm.setOnSeekBarChangeListener(sbListener);
-        sbGaz.setOnSeekBarChangeListener(sbListener);
 
         try {
 
@@ -81,6 +87,54 @@ public class ClientActivity extends Activity {
                 }
             }
         });
+
+
+        sbGaz.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int progressValue = SEEKBAR_DEFAULT_VALUE;
+                progressValue += progress - sbGazMax.getProgress();
+                sendDataToServer("g:" + progressValue);
+                textViewGaz.setText(progress + "|" + progressValue);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                sbGazMax.setEnabled(false);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                sbGazMax.setEnabled(true);
+                seekBar.setProgress(sbGazMax.getProgress());
+            }
+        });
+
+        sbGazMax.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvGazMaxValue.setText(getString(R.string.gazMaxValue) + "(" + progress + ")");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                sbGaz.setEnabled(false);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                sbGazMaxtopTrackingTouch(seekBar);
+            }
+        });
+
+
+        sbGazMaxtopTrackingTouch(sbGazMax);
+    }
+
+    private void sbGazMaxtopTrackingTouch(SeekBar seekBar){
+        sbGaz.setEnabled(true);
+        sbGaz.setMax(seekBar.getProgress() * 2);
+        sbGaz.setProgress(seekBar.getProgress());
     }
 
     private Button.OnClickListener buttonOnClick = new View.OnClickListener() {

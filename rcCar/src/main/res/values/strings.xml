@@ -15,5 +15,7 @@
     <string name="usbConnectOK">USB kapcsolat létrehozva</string>
     <string name="usbConnectNO">Nincs USB kapcsolat</string>
     <string name="networkStatus">Hálózat információk</string>
+    <string name="jozsef">Hálózat információk</string>
+    <string name="gazMaxValue">Gáz max értéke</string>
 
 </resources>

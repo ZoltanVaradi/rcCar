@@ -4,6 +4,7 @@
     android:layout_height="fill_parent"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -31,6 +32,24 @@
         android:text="@string/localIPcim"
         android:layout_below="@id/checkBoxGateway"
         android:layout_alignParentLeft="true" />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/gazMaxValue"
+        android:id="@+id/textViewGazMax"
+        android:layout_below="@id/editTextIP" />
+
+    <SeekBar
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarGazMax"
+        android:max="25"
+        android:progress="8"
+        android:layout_below="@id/textViewGazMax" />
+
 
     <Button
         android:layout_width="wrap_content"
@@ -89,5 +108,6 @@
         android:layout_marginBottom="12dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp" />
+
 
 </RelativeLayout>
