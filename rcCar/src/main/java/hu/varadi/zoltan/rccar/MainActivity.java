@@ -6,6 +6,9 @@ import android.app.Activity;
 import android.view.View;
 import android.widget.ImageButton;
 
+import hu.varadi.zoltan.rccar.server.ServerActivity;
+import hu.varadi.zoltan.rccar.client.ClientActivity;
+
 public class MainActivity extends Activity {
 
 

@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar;
+package hu.varadi.zoltan.rccar.server;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -17,7 +17,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,14 +34,21 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 
+import hu.varadi.zoltan.rccar.R;
+
 
 public class ServerActivity extends Activity implements Runnable {
+
+    //TODO: A szerver socket létrehozát és indítását kirakni metódusokba. Ha lecsatlakozik a kliens akkor automatikusan egy friss ropogós szerver szoketet indítani
+
+    //TODO: Több osztályt létrehoz, hogy átláthatóbb legyen a kód
 
     private static final String TAG = "rcCar_server";
 
     private static final String ACTION_USB_PERMISSION = "com.example.usbteszt1.USB_PERMISSION";
     private static final byte COMMAND_KORMANY = 0x3;
     private static final byte COMMAND_GAZ = 0x2;
+    private byte BASE_GAS_VALUE = 25;
 
     private PendingIntent mPermissionIntent;
     private boolean mPermissionRequestPending;
@@ -84,11 +90,9 @@ public class ServerActivity extends Activity implements Runnable {
     protected void onCreate(Bundle savedInstanceState) {
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
-
-        // Broadcast Intent for myPermission
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
 
-        // Register Intent myPermission and remove accessory
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
@@ -125,34 +129,31 @@ public class ServerActivity extends Activity implements Runnable {
                         .ipAddress);
         textViewStatus.setText(textViewString);
 
-        updateConversationHandler = new
+        updateConversationHandler = new Handler();
 
-                Handler();
-
-        this.serverThread = new
-
-                Thread(new ServerThread()
-
-        );
-
-        btn.setOnClickListener(new View.OnClickListener()
-
-        {
+        btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
                     if (btn.getText().toString().equals(getString(R.string.startServer))) {
 
-                        if (serverThread.getState() == Thread.State.NEW) {
+                        serverThread = new Thread(new ServerThread());
+
+                            commThreadRun = true;
                             serverThread.start();
 
-                        } else {
-                            Toast.makeText(getApplicationContext(), "serverThread.getState nem NEW", Toast.LENGTH_SHORT).show();
-
-                        }
+                            btn.setText(getString(R.string.stopServer));
 
                     } else if ((btn.getText().toString().equals(getString(R.string.stopServer)))) {
-                        btn.setText("nem lehet leállítani");
+                        // btn.setText(R.string.stopServer);
+                        if (serverSocket != null && !serverSocket.isClosed()) {
+                            serverSocket.close();
+                        }
+                        serverThread = null;
+                        commThreadRun = false;
+                        commThread = null;
+                        btn.setText(R.string.startServer);
+                        Toast.makeText(getApplicationContext(), getString(R.string.stopServer), Toast.LENGTH_SHORT).show();
                     }
                 } catch (Exception ex) {
                     Log.e("ex bnt ", ex.getLocalizedMessage());
@@ -168,7 +169,6 @@ public class ServerActivity extends Activity implements Runnable {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
@@ -255,23 +255,15 @@ public class ServerActivity extends Activity implements Runnable {
                         textViewStatus.append("\nPort:" + SERVERPORT);
                     }
                 });
-                btn.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        btn.setText(R.string.stopServer);
-                    }
-                });
-
 
                 try {
-
                     socket = serverSocket.accept();
-
                     updateConversationHandler.post(new showToastThread(socket.getRemoteSocketAddress().toString()));
 
                     commThread = new Thread(new CommunicationThread(socket));
                     commThread.start();
 
+                    //Az első bejövő kapcsolat után több nem lehet
                     serverSocket.close();
 
                 } catch (IOException e) {
@@ -288,17 +280,13 @@ public class ServerActivity extends Activity implements Runnable {
     class CommunicationThread implements Runnable {
 
         private Socket clientSocket;
-
         private BufferedReader input;
 
         public CommunicationThread(Socket clientSocket) {
 
             this.clientSocket = clientSocket;
-
             try {
-
                 this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -307,25 +295,35 @@ public class ServerActivity extends Activity implements Runnable {
         public void run() {
 
             while (!Thread.currentThread().isInterrupted() && commThreadRun) {
-
                 try {
 
                     String read = input.readLine();
-
                     updateConversationHandler.post(new updateUIThread(read));
 
-                    String[] sl = read.split(":");
-                    if (sl.length == 2) {
-                        byte value = Byte.parseByte(sl[1]);
-                        byte command = 0x0;
-                        if (sl[0].equalsIgnoreCase("k")) {
-                            command = COMMAND_KORMANY;
-                        } else if (sl[0].equalsIgnoreCase("g")) {
-                            command = COMMAND_GAZ;
+                    if (read != null) {
+                        String[] sl = read.split(":");
+                        if (sl.length == 2) {
+                            byte value = Byte.parseByte(sl[1]);
+                            byte command = 0x0;
+                            if (sl[0].equalsIgnoreCase("k")) {
+                                command = COMMAND_KORMANY;
+                            } else if (sl[0].equalsIgnoreCase("g")) {
+                                command = COMMAND_GAZ;
+                            }
+                            sendDataToUSB(command, value);
                         }
-                        sendCommand(command, value);
+                    } else {
+                        commThreadRun = false;
+                        commThread = null;
+                        sendDataToUSB(COMMAND_GAZ, BASE_GAS_VALUE);
+                        btn.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                btn.setText(R.string.startServer);
+                            }
+                        });
+                        updateConversationHandler.post(new showToastThread("Cliens kilépett? mert a read==null volt"));
                     }
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -371,7 +369,6 @@ public class ServerActivity extends Activity implements Runnable {
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
             }
         }
-
     }
 
     private void openAccessory(UsbAccessory accessory) {
@@ -417,7 +414,7 @@ public class ServerActivity extends Activity implements Runnable {
         }
     }
 
-    public void sendCommand(byte command, byte value) {
+    public void sendDataToUSB(byte command, byte value) {
         byte[] buffer = new byte[2];
         buffer[0] = command;
         buffer[1] = value;

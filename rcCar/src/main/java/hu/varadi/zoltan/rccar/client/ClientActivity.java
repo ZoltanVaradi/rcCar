@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar;
+package hu.varadi.zoltan.rccar.client;
 
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -13,8 +13,11 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -22,6 +25,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
+
+import hu.varadi.zoltan.rccar.R;
 
 public class ClientActivity extends Activity {
 
@@ -44,6 +49,7 @@ public class ClientActivity extends Activity {
     private Handler updateConversationHandler;
     private SeekBar sbGaz;
     private SeekBar sbGazMax;
+    private PrintWriter out;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +75,7 @@ public class ClientActivity extends Activity {
 
         try {
 
-
-            Log.e(LOG_TAG, bntConnect == null ? "true" : "false");
+            Log.e(LOG_TAG, bntConnect == null ? "bntConnect true" : "false");
             bntConnect.setOnClickListener(buttonOnClick);
         } catch (Exception ex) {
             Log.e(LOG_TAG, ex.getMessage());
@@ -95,7 +100,7 @@ public class ClientActivity extends Activity {
                 int progressValue = SEEKBAR_DEFAULT_VALUE;
                 progressValue += progress - sbGazMax.getProgress();
                 sendDataToServer("g:" + progressValue);
-                textViewGaz.setText(progress + "|" + progressValue);
+                textViewGaz.setText(progress + "|" + progressValue + "|" + sbGazMax.getProgress());
             }
 
             @Override
@@ -107,6 +112,7 @@ public class ClientActivity extends Activity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 sbGazMax.setEnabled(true);
                 seekBar.setProgress(sbGazMax.getProgress());
+
             }
         });
 
@@ -123,15 +129,18 @@ public class ClientActivity extends Activity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                sbGazMaxtopTrackingTouch(seekBar);
+                if (seekBar.getProgress() < 1) {
+                    seekBar.setProgress(1);
+                }
+                sbGazMaxStopTrackingTouch(seekBar);
             }
         });
 
 
-        sbGazMaxtopTrackingTouch(sbGazMax);
+        sbGazMaxStopTrackingTouch(sbGazMax);
     }
 
-    private void sbGazMaxtopTrackingTouch(SeekBar seekBar){
+    private void sbGazMaxStopTrackingTouch(SeekBar seekBar) {
         sbGaz.setEnabled(true);
         sbGaz.setMax(seekBar.getProgress() * 2);
         sbGaz.setProgress(seekBar.getProgress());
@@ -148,12 +157,13 @@ public class ClientActivity extends Activity {
                 SERVER_IP = editTextIpAddress.getText().toString();
             }
 
-            if (clientThread.getState() == Thread.State.NEW) {
+            if (clientThread != null && clientThread.getState() == Thread.State.NEW) {
                 clientThread.start();
-
+                view.setEnabled(false);
             } else if (socket == null) {
                 clientThread = new Thread(new ClientThread());
                 clientThread.start();
+                view.setEnabled(false);
             } else {
                 Toast.makeText(getApplicationContext(), "clientThread.state nem new", Toast.LENGTH_SHORT).show();
             }
@@ -183,20 +193,33 @@ public class ClientActivity extends Activity {
         @Override
         public void run() {
 
+            boolean ex = false;
+
             try {
                 InetAddress serverAddr = InetAddress.getByName(SERVER_IP);
-
                 socket = new Socket(serverAddr, SERVERPORT);
-
+                out = new PrintWriter(socket.getOutputStream(), true);
 
                 updateConversationHandler.post(new showToastThread("Kapcsi papcsi talán él"));
+
             } catch (UnknownHostException e1) {
                 Log.d("UnknownHostException", "e1");
                 updateConversationHandler.post(new showToastThread(e1.getMessage()));
                 e1.printStackTrace();
+                ex = true;
             } catch (IOException e1) {
                 updateConversationHandler.post(new showToastThread(e1.getMessage()));
                 e1.printStackTrace();
+                ex = true;
+            }
+
+            if (ex) {
+                bntConnect.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        bntConnect.setEnabled(true);
+                    }
+                });
             }
         }
     }
@@ -238,19 +261,21 @@ public class ClientActivity extends Activity {
         } else {
             Log.e(LOG_TAG, socket.isConnected() + "");
             try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(socket.getOutputStream())),
-                        true);
+
                 out.println(data);
+                out.flush();
                 Log.e(LOG_TAG, out.checkError() + "");
 
+                if (out.checkError()) {
+                    socket.close();
+                    socket = null;
+                    clientThread = null;
+                    bntConnect.setEnabled(true);
+                }
 
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.e(LOG_TAG, "sendDataToServer Exception " + e.getClass().toString());
             }
         }
     }
@@ -271,24 +296,20 @@ public class ClientActivity extends Activity {
                         sendDataToServer("k:" + progress);
                         break;
                 }
-
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBar.setProgress(SEEKBAR_DEFAULT_VALUE);
-
             }
         };
     }
 
-    protected String ipAddressToString(int ipAddress) {
-
+    private String ipAddressToString(int ipAddress) {
 
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
             ipAddress = Integer.reverseBytes(ipAddress);
@@ -306,5 +327,4 @@ public class ClientActivity extends Activity {
 
         return ipAddressString;
     }
-
 }
