@@ -1,18 +1,10 @@
 package hu.varadi.zoltan.rccar.server;
 
 import android.app.Activity;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.hardware.usb.UsbAccessory;
-import android.hardware.usb.UsbManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -20,152 +12,79 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.ByteOrder;
 
 import hu.varadi.zoltan.rccar.R;
+import hu.varadi.zoltan.rccar.listener.ConnectClientListener;
+import hu.varadi.zoltan.rccar.listener.InformationListener;
+import hu.varadi.zoltan.rccar.listener.NewDataListener;
+import hu.varadi.zoltan.rccar.util.WifiUtil;
+import hu.varadi.zoltan.rccar.util.rcCarUtil;
 
 
-public class ServerActivity extends Activity implements Runnable {
-
-    //TODO: A szerver socket létrehozát és indítását kirakni metódusokba. Ha lecsatlakozik a kliens akkor automatikusan egy friss ropogós szerver szoketet indítani
-
-    //TODO: Több osztályt létrehoz, hogy átláthatóbb legyen a kód
+public class ServerActivity extends Activity {
+    //TODO: A szerver socket létrehozát és indítását kirakni metódusokba. Ha lecsatlakozik a kliens akkor automatikusan egy friss ropogós szerver socketet indítani
 
     private static final String TAG = "rcCar_server";
-
-    private static final String ACTION_USB_PERMISSION = "com.example.usbteszt1.USB_PERMISSION";
-    private static final byte COMMAND_KORMANY = 0x3;
-    private static final byte COMMAND_GAZ = 0x2;
-    private byte BASE_GAS_VALUE = 25;
-
-    private PendingIntent mPermissionIntent;
-    private boolean mPermissionRequestPending;
-
-    private UsbManager mUsbManager;
-    private UsbAccessory mAccessory;
-
-    ParcelFileDescriptor mFileDescriptor;
-
-    FileInputStream mInputStream;
-    FileOutputStream mOutputStream;
-
-    ServerSocket server;
-
-    private ServerSocket serverSocket;
-    public static final int SERVERPORT = 6000;
-    Handler updateConversationHandler;
-    private Thread serverThread = null;
+    private int SERVERPORT = 6000;
+    private Handler updateConversationHandler;
     private TextView textViewStatus;
     private TextView mStatusView;
     private TextView textViewGaz;
     private TextView textViewKormany;
     private Button btn;
-    private WifiManager wifii;
-    private Thread commThread;
-    private boolean commThreadRun = true;
+    private WifiManager wifiManager;
+    private ServerThread serverThread = null;
+    private CommunicationThread communicationThread;
+    private USBCommunication usbCommunication;
 
-    public WifiConfiguration getWifiApConfiguration() {
-        try {
-            Method method = wifii.getClass().getMethod("getWifiApConfiguration");
-            return (WifiConfiguration) method.invoke(wifii);
-        } catch (Exception e) {
-            Log.e(this.getClass().toString(), "", e);
-            return null;
-        }
-    }
-
+    //-------------------------------activity lifecycl----------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-
-        mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
-        registerReceiver(mUsbReceiver, filter);
-
-/////////////////////////////////////////////////////////////////////////////
-        if (getLastNonConfigurationInstance() != null) {
-            mAccessory = (UsbAccessory) getLastNonConfigurationInstance();
-            openAccessory(mAccessory);
-        }
-/////////////////////////////////////////////////////////////////////////////
-
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_server);
+
+        usbCommunication = new USBCommunication(this);
+        usbCommunication.setInformationListener(new InformationListener() {
+            @Override
+            public void information(final String info, int type) {
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), info, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                if (type == InformationListener.INFO) {
+                    enableControls(true);
+                } else {
+                    enableControls(false);
+                }
+            }
+        });
 
         textViewStatus = (TextView) findViewById(R.id.textViewStatus);
         mStatusView = (TextView) findViewById(R.id.textViewStatusConnect);
         textViewGaz = (TextView) findViewById(R.id.textViewGaz);
         textViewKormany = (TextView) findViewById(R.id.textViewKormany);
         btn = (Button) findViewById(R.id.buttonServer);
-        wifii = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
+        wifiManager = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
 
-        WifiConfiguration wc = getWifiApConfiguration();
+        WifiConfiguration wc = WifiUtil.getWifiApConfiguration(wifiManager);
 
-
-        String textViewString = "";
-
-        textViewString += "AP name: " + wc.SSID + "\n";
-        textViewString += "Ip address: " +
-
-                ipAddressToString(wifii.getDhcpInfo()
-
-                        .ipAddress);
-        textViewStatus.setText(textViewString);
+        StringBuilder textViewSB = new StringBuilder();
+        textViewSB.append("AP name: ").append(wc.SSID).append("\n");
+        textViewSB.append("Ip address: ").append(WifiUtil.getMyIpAddress(wifiManager));
+        textViewStatus.setText(textViewSB.toString());
 
         updateConversationHandler = new Handler();
 
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if (btn.getText().toString().equals(getString(R.string.startServer))) {
-
-                        serverThread = new Thread(new ServerThread());
-
-                            commThreadRun = true;
-                            serverThread.start();
-
-                            btn.setText(getString(R.string.stopServer));
-
-                    } else if ((btn.getText().toString().equals(getString(R.string.stopServer)))) {
-                        // btn.setText(R.string.stopServer);
-                        if (serverSocket != null && !serverSocket.isClosed()) {
-                            serverSocket.close();
-                        }
-                        serverThread = null;
-                        commThreadRun = false;
-                        commThread = null;
-                        btn.setText(R.string.startServer);
-                        Toast.makeText(getApplicationContext(), getString(R.string.stopServer), Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception ex) {
-                    Log.e("ex bnt ", ex.getLocalizedMessage());
-                }
-            }
-        }
-
-        );
+        btn.setOnClickListener(onClickListener);
 
         enableControls(false);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -176,166 +95,97 @@ public class ServerActivity extends Activity implements Runnable {
     @Override
     protected void onStop() {
         super.onStop();
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-            }
-            commThreadRun = false;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        communicationThread = null;
+        serverThread = null;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        if (mInputStream != null && mOutputStream != null) {
-            return;
-        }
-
-        UsbAccessory[] accessories = mUsbManager.getAccessoryList();
-        UsbAccessory accessory = (accessories == null ? null : accessories[0]);
-        if (accessory != null) {
-            if (mUsbManager.hasPermission(accessory)) {
-                openAccessory(accessory);
-            } else {
-                synchronized (mUsbReceiver) {
-                    if (!mPermissionRequestPending) {
-                        mUsbManager.requestPermission(accessory, mPermissionIntent);
-                        mPermissionRequestPending = true;
-                    }
-                }
-            }
-        } else {
-            Log.d(TAG, "mAccessory is nullq1");
-        }
+        usbCommunication.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        closeAccessory();
+        usbCommunication.onPause();
     }
 
     @Override
     public void onDestroy() {
-        unregisterReceiver(mUsbReceiver);
+        usbCommunication.onDestroy();
         super.onDestroy();
     }
 
-    protected String ipAddressToString(int ipAddress) {
-        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-            ipAddress = Integer.reverseBytes(ipAddress);
-        }
 
-        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+    //-------------------------------Listener-------------------------------------------------------
 
-        String ipAddressString;
-        try {
-            ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
-        } catch (UnknownHostException ex) {
-            Log.e("WIFI_IP", "Unable to get host address.");
-            ipAddressString = "NaN";
-        }
 
-        return ipAddressString;
-    }
-
-    class ServerThread implements Runnable {
-
-        public void run() {
-            Socket socket = null;
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
             try {
-                serverSocket = new ServerSocket(SERVERPORT);
-                updateConversationHandler.post(new showToastThread("A szerver elindult"));
-                textViewStatus.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        textViewStatus.append("\nPort:" + SERVERPORT);
-                    }
-                });
+                if (btn.getText().toString().equals(getString(R.string.startServer))) {
 
-                try {
-                    socket = serverSocket.accept();
-                    updateConversationHandler.post(new showToastThread(socket.getRemoteSocketAddress().toString()));
+                    serverThread = new ServerThread(SERVERPORT);
+                    serverThread.setPriority(Thread.NORM_PRIORITY - 1);
+                    serverThread.setOnConnectClientListener(connectClientListener);
+                    serverThread.start();
 
-                    commThread = new Thread(new CommunicationThread(socket));
-                    commThread.start();
+                    btn.setText(getString(R.string.stopServer));
 
-                    //Az első bejövő kapcsolat után több nem lehet
-                    serverSocket.close();
+                } else if ((btn.getText().toString().equals(getString(R.string.stopServer)))) {
+                    // btn.setText(R.string.stopServer);
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    serverThread = null;
+
+                    communicationThread = null;
+                    btn.setText(R.string.startServer);
+                    usbCommunication.sendDataToUSB(rcCarUtil.COMMAND_GAZ, rcCarUtil.BASE_GAS_VALUE);
+                    Toast.makeText(getApplicationContext(), getString(R.string.stopServer), Toast.LENGTH_SHORT).show();
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                updateConversationHandler.post(new showToastThread(e.getLocalizedMessage()));
+            } catch (Exception ex) {
+                Log.e("ex bnt ", ex.getLocalizedMessage());
             }
         }
-    }
+    };
 
-    class CommunicationThread implements Runnable {
+    ConnectClientListener connectClientListener = new ConnectClientListener() {
+        @Override
+        public void connect(Socket clientSocket) {
+            communicationThread = new CommunicationThread(clientSocket);
+            communicationThread.setUSBWriteListener(newDataListener);
+            communicationThread.setInformationListener(new InformationListener() {
+                @Override
+                public void information(String info, int type) {
 
-        private Socket clientSocket;
-        private BufferedReader input;
-
-        public CommunicationThread(Socket clientSocket) {
-
-            this.clientSocket = clientSocket;
-            try {
-                this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                }
+            });
+            communicationThread.start();
         }
+    };
 
-        public void run() {
+    private NewDataListener newDataListener = new NewDataListener() {
+        @Override
+        public void newData(String data) {
+            String[] sl = data.split(":");
+            byte value = Byte.parseByte(sl[1]);
+            byte command = 0x0;
+            if (sl.length == 2) {
 
-            while (!Thread.currentThread().isInterrupted() && commThreadRun) {
-                try {
-
-                    String read = input.readLine();
-                    updateConversationHandler.post(new updateUIThread(read));
-
-                    if (read != null) {
-                        String[] sl = read.split(":");
-                        if (sl.length == 2) {
-                            byte value = Byte.parseByte(sl[1]);
-                            byte command = 0x0;
-                            if (sl[0].equalsIgnoreCase("k")) {
-                                command = COMMAND_KORMANY;
-                            } else if (sl[0].equalsIgnoreCase("g")) {
-                                command = COMMAND_GAZ;
-                            }
-                            sendDataToUSB(command, value);
-                        }
-                    } else {
-                        commThreadRun = false;
-                        commThread = null;
-                        sendDataToUSB(COMMAND_GAZ, BASE_GAS_VALUE);
-                        btn.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                btn.setText(R.string.startServer);
-                            }
-                        });
-                        updateConversationHandler.post(new showToastThread("Cliens kilépett? mert a read==null volt"));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (sl[0].equalsIgnoreCase("k")) {
+                    command = rcCarUtil.COMMAND_KORMANY;
+                } else if (sl[0].equalsIgnoreCase("g")) {
+                    command = rcCarUtil.COMMAND_GAZ;
                 }
             }
-            try {
-                input.close();
-                this.clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            updateConversationHandler.post(new updateUIThread(data));
+            usbCommunication.sendDataToUSB(command, value);
         }
-    }
+    };
+
+    //--------------------------------runnable------------------------------------------------------
+
 
     class updateUIThread implements Runnable {
         private String msg;
@@ -356,127 +206,14 @@ public class ServerActivity extends Activity implements Runnable {
         }
     }
 
-    class showToastThread implements Runnable {
-        private String msg;
+    //--------------------------------method--------------------------------------------------------
 
-        public showToastThread(String str) {
-            this.msg = str;
-        }
-
-        @Override
-        public void run() {
-            if (msg != null) {
-                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    private void openAccessory(UsbAccessory accessory) {
-        mFileDescriptor = mUsbManager.openAccessory(accessory);
-
-        if (mFileDescriptor != null) {
-            mAccessory = accessory;
-            FileDescriptor fd = mFileDescriptor.getFileDescriptor();
-
-            mInputStream = new FileInputStream(fd);
-            mOutputStream = new FileOutputStream(fd);
-
-            // communication thread start
-            Thread thread = new Thread(null, this, "DemoKit");
-            thread.start();
-            Log.d(TAG, "accessory opened");
-
-            enableControls(true);
-        } else {
-            Log.d(TAG, "accessory open fail");
-        }
-    }
-
-    private void closeAccessory() {
-        enableControls(false);
-
-        try {
-            if (mFileDescriptor != null) {
-                mFileDescriptor.close();
-            }
-        } catch (IOException e) {
-        } finally {
-            mFileDescriptor = null;
-            mAccessory = null;
-        }
-    }
 
     private void enableControls(boolean enable) {
         if (enable) {
             mStatusView.setText(R.string.usbConnectOK);
         } else {
             mStatusView.setText(R.string.usbConnectNO);
-        }
-    }
-
-    public void sendDataToUSB(byte command, byte value) {
-        byte[] buffer = new byte[2];
-        buffer[0] = command;
-        buffer[1] = value;
-        if (mOutputStream != null) {
-            try {
-                mOutputStream.write(buffer);
-            } catch (IOException e) {
-                Log.e(TAG, "write failed", e);
-            }
-        }
-    }
-
-    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            Log.d(TAG, "action " + action);
-            if (ACTION_USB_PERMISSION.equals(action)) {
-                synchronized (this) {
-                    UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        openAccessory(accessory);
-                    } else {
-                        Log.d(TAG, "permission denied for accessory " + accessory);
-                    }
-                    mPermissionRequestPending = false;
-                }
-            } else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
-                UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                if (accessory != null && accessory.equals(mAccessory)) {
-                    closeAccessory();
-                }
-            }
-        }
-    };
-
-    // USB read thread
-    @Override
-    public void run() {
-        int ret = 0;
-        byte[] buffer = new byte[16384];
-        int i;
-
-        // Accessory -> Android
-        while (ret >= 0) {
-            try {
-                ret = mInputStream.read(buffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
-            }
-
-            i = 0;
-            Log.d(TAG, "---------- read usb data begin ----------");
-            while (i < ret) {
-                Log.d(TAG, "read usb" + buffer[i]);
-                i++;
-            }
-            Log.d(TAG, "---------- read usb data end ----------");
-
         }
     }
 }

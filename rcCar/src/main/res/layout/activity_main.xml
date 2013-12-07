@@ -33,4 +33,12 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true" />
 
+    <TextView
+        android:id="@+id/version"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/checkBox"
+        android:text="@string/version"/>
+
+
 </RelativeLayout>
