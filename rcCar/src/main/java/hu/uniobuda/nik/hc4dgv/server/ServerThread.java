@@ -1,11 +1,12 @@
-package hu.varadi.zoltan.rccar.server;
+package hu.uniobuda.nik.hc4dgv.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import hu.varadi.zoltan.rccar.listener.ConnectClientListener;
-import hu.varadi.zoltan.rccar.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.varadi.zoltan.rccar.R;
+import hu.uniobuda.nik.hc4dgv.listener.ConnectClientListener;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06.
@@ -21,33 +22,24 @@ public class ServerThread extends Thread {
         this.serverPort = serverPort;
     }
 
+    //csak egy bejovo kapcsolatig var vagyis max egy kliens lehet
     public void run() {
         Socket socket;
         try {
             serverSocket = new ServerSocket(serverPort);
             if (informationListener != null) {
-                informationListener.information("A szerver elindult", InformationListener.SERVER_SOCKET_START);
+
+                informationListener.information(R.string.serverStarted, InformationListener.SERVER_SOCKET_START);
             }
 
-            try {
-                socket = serverSocket.accept();
+            socket = serverSocket.accept();
 
-                if (informationListener != null) {
-                    informationListener.information(socket.getRemoteSocketAddress().toString(), InformationListener.INFO);
-                }
-                if (connectClientListener != null) {
-                    connectClientListener.connect(socket);
-                }
-                //commRunnable= new CommunicationThread(socket,usbWrite);
-                //commThread = new Thread(new CommunicationThread(socket,usbWrite));
-                //commThread.start();
-
-                //Az első bejövő kapcsolat után több nem lehet
-                serverSocket.close();
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (connectClientListener != null) {
+                connectClientListener.connect(socket);
             }
+
+            //Az első bejövő kapcsolat után több nem lehet
+            serverSocket.close();
 
         } catch (IOException e) {
             e.printStackTrace();

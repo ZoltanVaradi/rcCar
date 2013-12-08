@@ -1,9 +1,8 @@
-package hu.varadi.zoltan.rccar.client;
+package hu.uniobuda.nik.hc4dgv.client;
 
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -11,9 +10,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import hu.varadi.zoltan.rccar.listener.InformationListener;
-import hu.varadi.zoltan.rccar.listener.NewDataListener;
-import hu.varadi.zoltan.rccar.util.rcCarUtil;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
+import hu.varadi.zoltan.rccar.R;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06.
@@ -30,6 +29,7 @@ class ClientCommunicationThread extends Thread {
     private InformationListener informationListener;
     private NewDataListener newDataListener;
 
+    //szal letrehozasakor az input output kiszedes
     ClientCommunicationThread(String serverIP, int serverPort) {
         this.serverIP = serverIP;
         this.serverPort = serverPort;
@@ -44,12 +44,12 @@ class ClientCommunicationThread extends Thread {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             if (informationListener != null) {
-                informationListener.information("Kapcsi papcsi talán él", InformationListener.INFO);
+                informationListener.information(R.string.connected, InformationListener.INFO);
             }
             this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-
+//folyamat figyeles hogy jott egy uj adat
                     String read = input.readLine();
                     if (read != null) {
 
@@ -85,9 +85,12 @@ class ClientCommunicationThread extends Thread {
 
     public void sendDataToServer(String data) {
         Log.e(LOG_TAG, "-----------------------------------------");
-
+//ha valaki uzzeni akar a masik oldalnak
         if (socket == null) {
             Log.e(LOG_TAG, "Socket is null");
+            if (informationListener != null) {
+                informationListener.information(R.string.socketNull, InformationListener.OUTPUT_ERROR);
+            }
         } else {
             Log.e(LOG_TAG, socket.isConnected() + "");
             try {
@@ -102,16 +105,21 @@ class ClientCommunicationThread extends Thread {
                     //clientThread = null;
                     //bntConnect.setEnabled(true);
                     if (informationListener != null) {
-                        informationListener.information("output.checkerror is true", InformationListener.OUTPUT_ERROR);
+                        informationListener.information(R.string.serverWriteError, InformationListener.OUTPUT_ERROR);
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e(LOG_TAG, "sendDataToServer Exception " + e.getClass().toString());
+                if (informationListener != null) {
+                    informationListener.information(R.string.serverWriteError, InformationListener.OUTPUT_ERROR);
+                }
             }
         }
     }
 
+
+    // a belso valtzok eleresehez metodusok
     public void setInformationListener(InformationListener i) {
         this.informationListener = i;
     }

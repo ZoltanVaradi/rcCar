@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar.receiver;
+package hu.uniobuda.nik.hc4dgv.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-import hu.varadi.zoltan.rccar.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
 
 /**
  * Created by Zoltan Varadi on 2013.12.07..

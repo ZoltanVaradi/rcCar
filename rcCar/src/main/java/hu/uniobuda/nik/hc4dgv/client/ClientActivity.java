@@ -1,26 +1,28 @@
-package hu.varadi.zoltan.rccar.client;
+package hu.uniobuda.nik.hc4dgv.client;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
+import android.os.SystemClock;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.Chronometer;
 import android.widget.EditText;
-import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import hu.varadi.zoltan.rccar.listener.InformationListener;
-import hu.varadi.zoltan.rccar.listener.NewDataListener;
-import hu.varadi.zoltan.rccar.util.WifiUtil;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
+import hu.uniobuda.nik.hc4dgv.util.WifiUtil;
+import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.uniobuda.nik.hc4dgv.view.AccelerometerView;
+import hu.uniobuda.nik.hc4dgv.view.BatteryView;
 
 import hu.varadi.zoltan.rccar.R;
-import hu.varadi.zoltan.rccar.util.rcCarUtil;
-import hu.varadi.zoltan.rccar.view.AccelerometerView;
-import hu.varadi.zoltan.rccar.view.BatteryView;
 
 public class ClientActivity extends Activity {
 
@@ -35,46 +37,62 @@ public class ClientActivity extends Activity {
     private TextView textViewGaz;
     private TextView TextViewKormany;
     private TextView tvGazMaxValue;
+    private TextView tvLight;
     private CheckBox checkBoxDefaultGataway;
-    private Button bntConnect;
+    private Button btnConnect;
     private SeekBar sbGaz;
     private SeekBar sbGazMax;
     private SeekBar sbKorm;
     private ClientCommunicationThread clientThread;
     private AccelerometerView accelerometerView;
     private BatteryView batteryView;
+    private Chronometer chronometer;
+    private SharedPreferences sharedPreferences;
 
     //-------------------------------activity lifecycl----------------------------------------------
+    //kozvetlen kapcsolatnal a default gateway-t hasznlaja
+    //egyebkent a beirt ip cimet
+    // a port meg nem valtzok
+    // ha leveszik a kapcsolat akkor alapalapotrol indul
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client);
 
         wifiManager = (WifiManager) getSystemService(getApplicationContext().WIFI_SERVICE);
+        sharedPreferences = getSharedPreferences(rcCarUtil.PrefFileName, 0);
 
         textViewGaz = (TextView) findViewById(R.id.textViewGaz);
         TextViewKormany = (TextView) findViewById(R.id.textViewKormany);
+        tvGazMaxValue = (TextView) findViewById(R.id.textViewGazMax);
+        tvLight = (TextView) findViewById(R.id.textViewLight);
         editTextIpAddress = (EditText) findViewById(R.id.editTextIP);
         checkBoxDefaultGataway = (CheckBox) findViewById(R.id.checkBoxGateway);
-        bntConnect = (Button) findViewById(R.id.buttonConnect);
+        btnConnect = (Button) findViewById(R.id.buttonConnect);
         sbKorm = (SeekBar) findViewById(R.id.seekBarKormany);
         sbGaz = (SeekBar) findViewById(R.id.seekBarGaz);
         sbGazMax = (SeekBar) findViewById(R.id.seekBarGazMax);
+        chronometer = (Chronometer) findViewById(R.id.chronometer);
 
-        tvGazMaxValue = (TextView) findViewById(R.id.textViewGazMax);
+        TextViewKormany.setText(sbKorm.getProgress() + "");
         tvGazMaxValue.setText(getString(R.string.gazMaxValue) + "(" + sbGazMax.getProgress() + ")");
 
         accelerometerView = (AccelerometerView) findViewById(R.id.accelerometerView);
         batteryView = (BatteryView) findViewById(R.id.batteryView);
 
-        sbKorm.setOnSeekBarChangeListener(sbKormanyListener);
-        bntConnect.setOnClickListener(buttonClickListener);
         checkBoxDefaultGataway.setOnClickListener(checkBoxClickListener);
+        sbKorm.setOnSeekBarChangeListener(sbKormanyListener);
+        btnConnect.setOnClickListener(buttonClickListener);
         sbGaz.setOnSeekBarChangeListener(sbGasChangeListener);
         sbGazMax.setOnSeekBarChangeListener(sbGazMaxChangeListener);
 
-        sbGazMaxStopTrackingTouch(sbGazMax);
+        sbGazMax.setProgress(rcCarUtil.getMaxSpeedSeekbar(sharedPreferences));
+        editTextIpAddress.setText(rcCarUtil.getIpAddress(sharedPreferences));
+        checkBoxDefaultGataway.setChecked(rcCarUtil.getUseGateway(sharedPreferences));
+        editTextIpAddress.setEnabled(!checkBoxDefaultGataway.isChecked());
 
+        sbGazMaxStopTrackingTouch(sbGazMax);
     }
 
 
@@ -84,11 +102,12 @@ public class ClientActivity extends Activity {
 
         SERVER_IP = WifiUtil.getGatewayIp(wifiManager);
 
+        //wifimmanager-ből kinyerhető információ
         StringBuilder textViewSB = new StringBuilder();
-        textViewSB.append("Wifi enabled:            ").append(wifiManager.isWifiEnabled()).append("\n");
-        textViewSB.append("My ip:                   ").append(WifiUtil.getMyIpAddress(wifiManager)).append("\n");
-        textViewSB.append("Default gateway:         ").append(SERVER_IP).append("\n");
-        textViewSB.append("Connected AP name:       ").append(WifiUtil.getSSID(wifiManager));
+        textViewSB.append(getString(R.string.wifiState)).append(wifiManager.isWifiEnabled()).append("\n");
+        textViewSB.append(getString(R.string.ipAddress)).append(WifiUtil.getMyIpAddress(wifiManager)).append("\n");
+        textViewSB.append(getString(R.string.defaultGataway)).append(SERVER_IP).append("\n");
+        textViewSB.append(getString(R.string.ApName)).append(WifiUtil.getSSID(wifiManager));
 
         TextView textStatus = (TextView) findViewById(R.id.textViewStat);
         textStatus.setText(textViewSB.toString());
@@ -108,6 +127,7 @@ public class ClientActivity extends Activity {
 
 
     private void creatClientTherad() {
+        // egy szalat elokeszitve a communikcaciohoz
         clientThread = new ClientCommunicationThread(SERVER_IP, SERVERPORT);
         clientThread.setPriority(Thread.NORM_PRIORITY - 1);
         clientThread.setInformationListener(new InformationListener() {
@@ -125,14 +145,26 @@ public class ClientActivity extends Activity {
                         break;
                     case InformationListener.ERROR:
                     case InformationListener.OUTPUT_ERROR:
-                        bntConnect.post(new Runnable() {
+                        btnConnect.post(new Runnable() {
                             @Override
                             public void run() {
-                                bntConnect.setEnabled(true);
+                                btnConnect.setEnabled(true);
+
+                            }
+                        });
+                        chronometer.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                chronometer.stop();
                             }
                         });
                         break;
                 }
+            }
+
+            @Override
+            public void information(int stringResourcesID, int type) {
+                this.information(getString(stringResourcesID), type);
             }
         });
         clientThread.setNewDataListener(new NewDataListener() {
@@ -152,6 +184,16 @@ public class ClientActivity extends Activity {
                     int level = Integer.parseInt(s[1]);
                     long time = Long.parseLong(s[2]);
                     batteryView.addValueAndroid(level);
+                } else if (rcCarUtil.COMMAND_SENSOR_LIGHT.equals(s[0])) {
+                    final String light = s[1];
+                    long time = Long.parseLong(s[2]);
+                    tvLight.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvLight.setText(light + " ");
+                        }
+                    });
+
                 }
 
 
@@ -166,11 +208,8 @@ public class ClientActivity extends Activity {
     private View.OnClickListener checkBoxClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (checkBoxDefaultGataway.isChecked()) {
-                editTextIpAddress.setEnabled(false);
-            } else {
-                editTextIpAddress.setEnabled(true);
-            }
+            editTextIpAddress.setEnabled(!checkBoxDefaultGataway.isChecked());
+            rcCarUtil.saveUseGateway(sharedPreferences, checkBoxDefaultGataway.isChecked());
         }
     };
 
@@ -222,6 +261,7 @@ public class ClientActivity extends Activity {
         sbGaz.setEnabled(true);
         sbGaz.setMax(seekBar.getProgress() * 2);
         sbGaz.setProgress(seekBar.getProgress());
+        rcCarUtil.saveMaxSpeedSeekbar(sharedPreferences, seekBar.getProgress());
     }
 
 
@@ -240,9 +280,14 @@ public class ClientActivity extends Activity {
 
             if (clientThread != null && clientThread.getState() == Thread.State.NEW) {
                 clientThread.start();
+
+                chronometer.setBase(SystemClock.elapsedRealtime());
+                chronometer.start();
                 view.setEnabled(false);
+                rcCarUtil.saveIpAddress(sharedPreferences, SERVER_IP);
             } else {
-                Toast.makeText(getApplicationContext(), "clientThread.state nem new", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), getString(R.string.connectError), Toast.LENGTH_SHORT).show();
+                clientThread = null;
             }
 
         }
@@ -251,19 +296,10 @@ public class ClientActivity extends Activity {
     private SeekBar.OnSeekBarChangeListener sbKormanyListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            TextViewKormany.setText(progress + "");
             if (clientThread != null) {
-                switch (seekBar.getId()) {
-                    case R.id.seekBarGaz:
-                        textViewGaz.setText(progress + "");
-                        clientThread.sendDataToServer("g:" + progress);
-
-                        break;
-                    case R.id.seekBarKormany:
-                        TextViewKormany.setText(progress + "");
-                        int progress2 = 50 - progress; //megforditom az iranyt az uj servo miatt
-                        clientThread.sendDataToServer("k:" + progress2);
-                        break;
-                }
+                int progress2 = 50 - progress; //megforditom az iranyt az uj servo miatt
+                clientThread.sendDataToServer("k:" + progress2);
             }
         }
 

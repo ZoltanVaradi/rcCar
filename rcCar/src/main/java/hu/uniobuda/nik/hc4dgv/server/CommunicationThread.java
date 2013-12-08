@@ -1,19 +1,17 @@
-package hu.varadi.zoltan.rccar.server;
+package hu.uniobuda.nik.hc4dgv.server;
 
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import hu.varadi.zoltan.rccar.listener.InformationListener;
-import hu.varadi.zoltan.rccar.listener.NewDataListener;
-import hu.varadi.zoltan.rccar.util.rcCarUtil;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
+import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.varadi.zoltan.rccar.R;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06..
@@ -29,14 +27,18 @@ public class CommunicationThread extends Thread {
     private NewDataListener newDataListener;
 
 
+    //letrehozasnal az input es output kiszedese a socket-bol
     public CommunicationThread(Socket clientSocket) {
-        this.commThreadRun = true;
-        this.clientSocket = clientSocket;
         try {
+            this.commThreadRun = true;
+            this.clientSocket = clientSocket;
             this.input = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
             this.output = new PrintWriter(this.clientSocket.getOutputStream(), true);
         } catch (IOException e) {
             e.printStackTrace();
+            if (info != null) {
+                info.information(e.getLocalizedMessage(), InformationListener.INPUT_ERROR);
+            }
         }
     }
 
@@ -44,8 +46,7 @@ public class CommunicationThread extends Thread {
 
         while (!Thread.currentThread().isInterrupted() && commThreadRun) {
             try {
-
-
+//a szal inditasa utan ha van uj adat a akkor a newDataListener-en keresztul ertesites lesz
                 String read = input.readLine();
                 if (read != null) {
 
@@ -54,16 +55,18 @@ public class CommunicationThread extends Thread {
                     }
                 } else {
                     commThreadRun = false;
-                    // commThread = null;
                     if (newDataListener != null) {
                         newDataListener.newData(rcCarUtil.COMMAND_GAZ + ":" + rcCarUtil.BASE_GAS_VALUE);
                     }
                     if (info != null) {
-                        info.information("Cliens kilépett? mert a read==null volt", InformationListener.INPUT_ERROR);
+                        info.information(R.string.clitenNull, InformationListener.INPUT_ERROR);
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                if (info != null) {
+                    info.information(e.getLocalizedMessage(), InformationListener.INPUT_ERROR);
+                }
             }
         }
         try {
@@ -74,13 +77,14 @@ public class CommunicationThread extends Thread {
         }
     }
 
-    public void writeDataToOutput(String data) {
+    public void writeDataToOutputSream(String data) {
+        //ha informactio kozulni kell a masik oldallal
         Log.e(LOG_TAG, data);
 
         if (clientSocket == null) {
             Log.e(LOG_TAG, "Socket is null");
             if (info != null) {
-                info.information("Socket is null", InformationListener.OUTPUT_ERROR);
+                info.information(R.string.socketNull, InformationListener.OUTPUT_ERROR);
             }
         } else {
             //Log.e(LOG_TAG, clientSocket.isConnected() + "");
@@ -97,20 +101,21 @@ public class CommunicationThread extends Thread {
                     //clientThread = null;
                     //bntConnect.setEnabled(true);
                     if (info != null) {
-                        info.information("output.checkerror is true", InformationListener.OUTPUT_ERROR);
+                        info.information(R.string.clientWriteError, InformationListener.OUTPUT_ERROR);
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e(LOG_TAG, "sendDataToServer Exception " + e.getClass().toString());
                 if (info != null) {
-                    info.information("writeDataToOutput Exception", InformationListener.OUTPUT_ERROR);
+                    info.information(R.string.clientWriteError, InformationListener.OUTPUT_ERROR);
                 }
             }
         }
     }
 
 
+    //csak par metudus hogy el lehessen erni a beslo valtozokat
     public boolean isCommThreadRun() {
         return commThreadRun;
     }
@@ -133,5 +138,15 @@ public class CommunicationThread extends Thread {
 
     public void removeUSBWriteListener() {
         this.newDataListener = null;
+    }
+
+    public void closeSocket() {
+        if (clientSocket != null) {
+            try {
+                this.clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

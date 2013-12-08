@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar;
+package hu.uniobuda.nik.hc4dgv;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,8 +6,9 @@ import android.app.Activity;
 import android.view.View;
 import android.widget.ImageButton;
 
-import hu.varadi.zoltan.rccar.server.ServerActivity;
-import hu.varadi.zoltan.rccar.client.ClientActivity;
+import hu.uniobuda.nik.hc4dgv.client.ClientActivity;
+import hu.varadi.zoltan.rccar.R;
+import hu.uniobuda.nik.hc4dgv.server.ServerActivity;
 
 public class MainActivity extends Activity {
 

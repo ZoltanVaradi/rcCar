@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar.view;
+package hu.uniobuda.nik.hc4dgv.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -59,7 +59,7 @@ public class BatteryView extends View {
 
         for (int i = 0; i < MAX_VALUES; i++) {
             valuesAndroid.add(0);
-            valuesRcCar.add(0);
+            valuesRcCar.add(2);
         }
 
     }
@@ -78,6 +78,7 @@ public class BatteryView extends View {
         postInvalidate();
     }
 
+    //egy egyszeru grafikon es egy beleiras
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

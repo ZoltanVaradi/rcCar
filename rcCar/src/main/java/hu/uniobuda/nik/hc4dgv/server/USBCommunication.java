@@ -1,4 +1,4 @@
-package hu.varadi.zoltan.rccar.server;
+package hu.uniobuda.nik.hc4dgv.server;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -16,8 +16,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import hu.varadi.zoltan.rccar.listener.InformationListener;
-import hu.varadi.zoltan.rccar.util.rcCarUtil;
+import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.varadi.zoltan.rccar.R;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06..
@@ -48,17 +49,16 @@ public class USBCommunication implements Runnable {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
-        this.activity.registerReceiver(mUsbReceiver, filter);
+        this.activity.registerReceiver(usbReceiver, filter);
 
-/////////////////////////////////////////////////////////////////////////////
         if (this.activity.getLastNonConfigurationInstance() != null) {
             mAccessory = (UsbAccessory) this.activity.getLastNonConfigurationInstance();
             openAccessory(mAccessory);
         }
-/////////////////////////////////////////////////////////////////////////////
 
     }
 
+    //usb eszkozok lekerdezese es a nulladik megnyitasa
     private void openAccessory(UsbAccessory accessory) {
         parcelFileDescriptor = usbManager.openAccessory(accessory);
 
@@ -73,22 +73,22 @@ public class USBCommunication implements Runnable {
             Thread thread = new Thread(null, this, "DemoKit");
             thread.start();
             sendDataToUSB(rcCarUtil.COMMAND_GAZ, rcCarUtil.BASE_GAS_VALUE);
-            Log.d(TAG, "accessory opened");
-            if(informationListener !=null){
-                informationListener.information("accessory opened", InformationListener.INFO);
+            Log.d(TAG, "acc opened");
+            if (informationListener != null) {
+
+                informationListener.information(R.string.accessoryOpen, InformationListener.INFO);
             }
 
         } else {
-            Log.d(TAG, "accessory open fail");
-            if(informationListener !=null){
-                informationListener.information("accessory open fail",InformationListener.ERROR);
+            Log.d(TAG, "acc open fail");
+            if (informationListener != null) {
+                informationListener.information(R.string.accessoryOpenFail, InformationListener.ERROR);
             }
         }
     }
 
+    //megnyitott usb kapcsolat lezarasa, de elott meg kuldunk egy utolsot rajta
     private void closeAccessory() {
-        //enableControls(false);
-
         try {
             if (parcelFileDescriptor != null) {
                 sendDataToUSB(rcCarUtil.COMMAND_GAZ, rcCarUtil.BASE_GAS_VALUE);
@@ -101,6 +101,7 @@ public class USBCommunication implements Runnable {
         }
     }
 
+    //usb-be iras
     public void sendDataToUSB(byte command, byte value) {
         byte[] buffer = new byte[2];
         buffer[0] = command;
@@ -111,13 +112,14 @@ public class USBCommunication implements Runnable {
             } catch (IOException e) {
                 Log.e(TAG, "write failed", e);
                 if (informationListener != null) {
-                    informationListener.information("write failed", InformationListener.OUTPUT_ERROR);
+                    informationListener.information(R.string.usbWriteError, InformationListener.OUTPUT_ERROR);
                 }
             }
         }
     }
 
-    private final BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+    //ha csatalkoztattak egy usb eszkozt akkor arrol jo ha jon ertesites
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -185,7 +187,7 @@ public class USBCommunication implements Runnable {
             if (usbManager.hasPermission(accessory)) {
                 openAccessory(accessory);
             } else {
-                synchronized (mUsbReceiver) {
+                synchronized (usbReceiver) {
                     if (!permissionRequestPending) {
                         usbManager.requestPermission(accessory, pendingIntent);
                         permissionRequestPending = true;
@@ -195,7 +197,8 @@ public class USBCommunication implements Runnable {
         } else {
             Log.d(TAG, "mAccessory is null1");
             if (informationListener != null) {
-                informationListener.information("mAccessory is null1", InformationListener.ERROR);
+
+                informationListener.information(R.string.accessoryEmpty, InformationListener.ERROR);
             }
         }
     }
@@ -206,7 +209,7 @@ public class USBCommunication implements Runnable {
     }
 
     public void onDestroy() {
-        this.activity.unregisterReceiver(mUsbReceiver);
+        this.activity.unregisterReceiver(usbReceiver);
 
     }
 

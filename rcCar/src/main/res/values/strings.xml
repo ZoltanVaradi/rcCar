@@ -10,15 +10,32 @@
     <string name="startServer">Start Szerver</string>
     <string name="stopServer">Stop Szerver</string>
     <string name="connectToServer">Csatlakozás</string>
-    <string name="defaultGataway">Közvetlen kapcsolat</string>
+    <string name="defaultGataway">Közvetlen kapcsolat </string>
     <string name="localIPcim">192.168.1.100</string>
     <string name="usbConnectOK">USB kapcsolat létrehozva</string>
     <string name="usbConnectNO">Nincs USB kapcsolat</string>
     <string name="networkStatus">Hálózat információk</string>
-    <string name="jozsef">Hálózat információk</string>
+    <string name="serverStarted">A szerver elindult</string>
+    <string name="clitenNull">Cliens kilépett? mert a read==null volt</string>
     <string name="gazMaxValue">Gáz max értéke</string>
     <string name="version">Verzió: 0.1</string>
     <string name="GPS">GPS</string>
-    <string name="battery">Akku állapotok</string>
+    <string name="battery">Akku állapotok grafikon</string>
+    <string name="socketNull">Nincs kapcsolat a klienssel</string>
+    <string name="clientWriteError">Sikertelen adatüldés</string>
+    <string name="gpsState">GPS állapota:</string>
+    <string name="gpsStateOn">bekapcsolva</string>
+    <string name="gpsStateOff">kikapcsolva</string>
+    <string name="usbWriteError">Sikertelen kommunikáció az USB porton</string>
+    <string name="accessoryEmpty">Nincs USB kiegészítő csatlakoztatva</string>
+    <string name="accessoryOpenFail">USB kapcsolat sikertelen megnyitása</string>
+    <string name="accessoryOpen">USB kapcsolat létrehozva</string>
+    <string name="ApName">AP neve: </string>
+    <string name="ipAddress">IP cím </string>
+    <string name="wifiIsOff">Wifi nincs bekapcsolva</string>
+    <string name="connected">A kacsolat felállt</string>
+    <string name="serverWriteError">Sikertelen adatküldés</string>
+    <string name="connectError">Hiba a kapcsolat létrehozásakor</string>
+    <string name="wifiState">Wifi állapot:</string>
 
 </resources>

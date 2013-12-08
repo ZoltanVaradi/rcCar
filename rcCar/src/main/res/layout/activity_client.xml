@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ClientActivity"
+    tools:context=".client.ClientActivity"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
 
@@ -52,12 +52,22 @@
         android:layout_below="@id/textViewGazMax" />
 
 
+    <Chronometer
+        android:id="@+id/chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="90dp"
+        android:layout_marginTop="10dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true" />
+
     <Button
         android:id="@+id/buttonConnect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/connectToServer"
-        android:layout_margin="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_below="@+id/chronometer"
         android:layout_alignParentRight="true" />
 
 
@@ -108,7 +118,7 @@
         android:paddingBottom="10dp" />
 
 
-    <hu.varadi.zoltan.rccar.view.AccelerometerView
+    <hu.uniobuda.nik.hc4dgv.view.AccelerometerView
         android:id="@+id/accelerometerView"
         android:layout_width="150dp"
         android:layout_height="150dp"
@@ -124,12 +134,21 @@
         android:layout_marginLeft="20dp"
         android:layout_above="@+id/batteryView" />
 
-    <hu.varadi.zoltan.rccar.view.BatteryView
+    <hu.uniobuda.nik.hc4dgv.view.BatteryView
         android:id="@+id/batteryView"
         android:layout_width="300dp"
         android:layout_height="100dp"
         android:layout_alignParentBottom="true"
         android:layout_toRightOf="@id/seekBarKormany"
-        android:layout_marginLeft="20dp" />
+        android:layout_marginLeft="20dp"
+        android:layout_marginBottom="5dp" />
+
+    <TextView
+        android:id="@+id/textViewLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/accelerometerView"
+        android:layout_toLeftOf="@+id/accelerometerView" />
+
 
 </RelativeLayout>
