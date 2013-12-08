@@ -28,6 +28,14 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:id="@+id/textViewSensorGPS"
+        android:text="@string/GPS"
+        android:layout_gravity="left|center_vertical" />
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/textViewKormany"
         android:text="Kormány"
@@ -40,6 +48,7 @@
         android:id="@+id/textViewGaz"
         android:text="Gáz-fék"
         android:layout_gravity="left|center_vertical" />
+
 
 
 </LinearLayout>

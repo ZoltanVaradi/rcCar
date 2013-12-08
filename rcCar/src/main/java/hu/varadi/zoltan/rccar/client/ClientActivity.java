@@ -8,14 +8,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import hu.varadi.zoltan.rccar.listener.InformationListener;
+import hu.varadi.zoltan.rccar.listener.NewDataListener;
 import hu.varadi.zoltan.rccar.util.WifiUtil;
 
 import hu.varadi.zoltan.rccar.R;
+import hu.varadi.zoltan.rccar.util.rcCarUtil;
+import hu.varadi.zoltan.rccar.view.AccelerometerView;
+import hu.varadi.zoltan.rccar.view.BatteryView;
 
 public class ClientActivity extends Activity {
 
@@ -36,6 +41,8 @@ public class ClientActivity extends Activity {
     private SeekBar sbGazMax;
     private SeekBar sbKorm;
     private ClientCommunicationThread clientThread;
+    private AccelerometerView accelerometerView;
+    private BatteryView batteryView;
 
     //-------------------------------activity lifecycl----------------------------------------------
     @Override
@@ -57,6 +64,8 @@ public class ClientActivity extends Activity {
         tvGazMaxValue = (TextView) findViewById(R.id.textViewGazMax);
         tvGazMaxValue.setText(getString(R.string.gazMaxValue) + "(" + sbGazMax.getProgress() + ")");
 
+        accelerometerView = (AccelerometerView) findViewById(R.id.accelerometerView);
+        batteryView = (BatteryView) findViewById(R.id.batteryView);
 
         sbKorm.setOnSeekBarChangeListener(sbKormanyListener);
         bntConnect.setOnClickListener(buttonClickListener);
@@ -65,6 +74,7 @@ public class ClientActivity extends Activity {
         sbGazMax.setOnSeekBarChangeListener(sbGazMaxChangeListener);
 
         sbGazMaxStopTrackingTouch(sbGazMax);
+
     }
 
 
@@ -78,7 +88,7 @@ public class ClientActivity extends Activity {
         textViewSB.append("Wifi enabled:            ").append(wifiManager.isWifiEnabled()).append("\n");
         textViewSB.append("My ip:                   ").append(WifiUtil.getMyIpAddress(wifiManager)).append("\n");
         textViewSB.append("Default gateway:         ").append(SERVER_IP).append("\n");
-        textViewSB.append("Connected AP name:       ").append(WifiUtil.getSSID(wifiManager)).append("\n");
+        textViewSB.append("Connected AP name:       ").append(WifiUtil.getSSID(wifiManager));
 
         TextView textStatus = (TextView) findViewById(R.id.textViewStat);
         textStatus.setText(textViewSB.toString());
@@ -123,6 +133,28 @@ public class ClientActivity extends Activity {
                         });
                         break;
                 }
+            }
+        });
+        clientThread.setNewDataListener(new NewDataListener() {
+            @Override
+            public void newData(String data) {
+                String[] s = data.split(";");
+
+                if (rcCarUtil.COMMAND_SENSOR_ACC.equals(s[0])) {
+                    float[] f = new float[3];
+                    long time;
+                    f[0] = Float.parseFloat(s[1]);
+                    f[1] = Float.parseFloat(s[2]);
+                    f[2] = Float.parseFloat(s[3]);
+                    time = Long.parseLong(s[4]);
+                    accelerometerView.addValue(f);
+                } else if (rcCarUtil.COMMAND_SENSOR_AKKU_ANDROID.equals(s[0])) {
+                    int level = Integer.parseInt(s[1]);
+                    long time = Long.parseLong(s[2]);
+                    batteryView.addValueAndroid(level);
+                }
+
+
             }
         });
     }
@@ -202,10 +234,11 @@ public class ClientActivity extends Activity {
             } else {
                 SERVER_IP = editTextIpAddress.getText().toString();
             }
-
+            if (clientThread == null) {
+                creatClientTherad();
+            }
 
             if (clientThread != null && clientThread.getState() == Thread.State.NEW) {
-                creatClientTherad();
                 clientThread.start();
                 view.setEnabled(false);
             } else {

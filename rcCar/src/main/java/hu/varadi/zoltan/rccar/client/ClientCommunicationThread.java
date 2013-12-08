@@ -2,26 +2,33 @@ package hu.varadi.zoltan.rccar.client;
 
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 import hu.varadi.zoltan.rccar.listener.InformationListener;
+import hu.varadi.zoltan.rccar.listener.NewDataListener;
+import hu.varadi.zoltan.rccar.util.rcCarUtil;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06.
  */
 class ClientCommunicationThread extends Thread {
 
-    private static final String LOG_TAG= "ClientCommunicationThread.java";
+    private static final String LOG_TAG = "ClientCommunicationThread.java";
 
     private Socket socket;
     private PrintWriter out;
+    private BufferedReader input;
     private String serverIP;
     private int serverPort;
     private InformationListener informationListener;
+    private NewDataListener newDataListener;
 
     ClientCommunicationThread(String serverIP, int serverPort) {
         this.serverIP = serverIP;
@@ -39,14 +46,38 @@ class ClientCommunicationThread extends Thread {
             if (informationListener != null) {
                 informationListener.information("Kapcsi papcsi talán él", InformationListener.INFO);
             }
+            this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+
+                    String read = input.readLine();
+                    if (read != null) {
+
+                        if (newDataListener != null) {
+                            newDataListener.newData(read);
+                        }
+                    } else {
+                        Log.e(LOG_TAG, "read az egy null");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                input.close();
+                this.socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         } catch (UnknownHostException e1) {
             if (informationListener != null) {
-                informationListener.information(e1.getMessage(),InformationListener.ERROR);
+                informationListener.information(e1.getMessage(), InformationListener.ERROR);
             }
             e1.printStackTrace();
         } catch (IOException e1) {
             if (informationListener != null) {
-                informationListener.information(e1.getMessage(),InformationListener.ERROR);
+                informationListener.information(e1.getMessage(), InformationListener.ERROR);
             }
         }
 
@@ -71,7 +102,7 @@ class ClientCommunicationThread extends Thread {
                     //clientThread = null;
                     //bntConnect.setEnabled(true);
                     if (informationListener != null) {
-                        informationListener.information("output.checkerror is true",InformationListener.OUTPUT_ERROR);
+                        informationListener.information("output.checkerror is true", InformationListener.OUTPUT_ERROR);
                     }
                 }
             } catch (Exception e) {
@@ -85,7 +116,15 @@ class ClientCommunicationThread extends Thread {
         this.informationListener = i;
     }
 
+    public void setNewDataListener(NewDataListener n) {
+        this.newDataListener = n;
+    }
+
     public void removeInformationListener() {
         this.informationListener = null;
+    }
+
+    public void removeNewDataListener() {
+        this.newDataListener = null;
     }
 }

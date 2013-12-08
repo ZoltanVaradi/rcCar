@@ -11,12 +11,14 @@
     <string name="stopServer">Stop Szerver</string>
     <string name="connectToServer">Csatlakozás</string>
     <string name="defaultGataway">Közvetlen kapcsolat</string>
-    <string name="localIPcim">192.168.1.103</string>
+    <string name="localIPcim">192.168.1.100</string>
     <string name="usbConnectOK">USB kapcsolat létrehozva</string>
     <string name="usbConnectNO">Nincs USB kapcsolat</string>
     <string name="networkStatus">Hálózat információk</string>
     <string name="jozsef">Hálózat információk</string>
     <string name="gazMaxValue">Gáz max értéke</string>
-    <string name="version">Versió: 0.1</string>
+    <string name="version">Verzió: 0.1</string>
+    <string name="GPS">GPS</string>
+    <string name="battery">Akku állapotok</string>
 
 </resources>
