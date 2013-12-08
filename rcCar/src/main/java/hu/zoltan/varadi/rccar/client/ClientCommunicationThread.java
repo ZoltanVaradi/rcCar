@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.client;
+package hu.zoltan.varadi.rccar.client;
 
 import android.util.Log;
 
@@ -10,8 +10,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
-import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.NewDataListener;
 import hu.varadi.zoltan.rccar.R;
 
 /**
@@ -29,7 +29,7 @@ class ClientCommunicationThread extends Thread {
     private InformationListener informationListener;
     private NewDataListener newDataListener;
 
-    //szal letrehozasakor az input output kiszedes
+
     ClientCommunicationThread(String serverIP, int serverPort) {
         this.serverIP = serverIP;
         this.serverPort = serverPort;
@@ -49,7 +49,7 @@ class ClientCommunicationThread extends Thread {
             this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-//folyamat figyeles hogy jott egy uj adat
+
                     String read = input.readLine();
                     if (read != null) {
 
@@ -85,7 +85,6 @@ class ClientCommunicationThread extends Thread {
 
     public void sendDataToServer(String data) {
         Log.e(LOG_TAG, "-----------------------------------------");
-//ha valaki uzzeni akar a masik oldalnak
         if (socket == null) {
             Log.e(LOG_TAG, "Socket is null");
             if (informationListener != null) {
@@ -119,7 +118,6 @@ class ClientCommunicationThread extends Thread {
     }
 
 
-    // a belso valtzok eleresehez metodusok
     public void setInformationListener(InformationListener i) {
         this.informationListener = i;
     }

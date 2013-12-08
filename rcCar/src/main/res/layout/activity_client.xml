@@ -118,7 +118,7 @@
         android:paddingBottom="10dp" />
 
 
-    <hu.uniobuda.nik.hc4dgv.view.AccelerometerView
+    <hu.zoltan.varadi.rccar.view.AccelerometerView
         android:id="@+id/accelerometerView"
         android:layout_width="150dp"
         android:layout_height="150dp"
@@ -134,7 +134,7 @@
         android:layout_marginLeft="20dp"
         android:layout_above="@+id/batteryView" />
 
-    <hu.uniobuda.nik.hc4dgv.view.BatteryView
+    <hu.zoltan.varadi.rccar.view.BatteryView
         android:id="@+id/batteryView"
         android:layout_width="300dp"
         android:layout_height="100dp"

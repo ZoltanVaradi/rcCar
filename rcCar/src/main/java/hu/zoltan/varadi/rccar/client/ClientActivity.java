@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.client;
+package hu.zoltan.varadi.rccar.client;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -15,12 +15,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
-import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
-import hu.uniobuda.nik.hc4dgv.util.WifiUtil;
-import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
-import hu.uniobuda.nik.hc4dgv.view.AccelerometerView;
-import hu.uniobuda.nik.hc4dgv.view.BatteryView;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.NewDataListener;
+import hu.zoltan.varadi.rccar.util.WifiUtil;
+import hu.zoltan.varadi.rccar.util.rcCarUtil;
+import hu.zoltan.varadi.rccar.view.AccelerometerView;
+import hu.zoltan.varadi.rccar.view.BatteryView;
 
 import hu.varadi.zoltan.rccar.R;
 
@@ -50,11 +50,6 @@ public class ClientActivity extends Activity {
     private SharedPreferences sharedPreferences;
 
     //-------------------------------activity lifecycl----------------------------------------------
-    //kozvetlen kapcsolatnal a default gateway-t hasznlaja
-    //egyebkent a beirt ip cimet
-    // a port meg nem valtzok
-    // ha leveszik a kapcsolat akkor alapalapotrol indul
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,7 +97,6 @@ public class ClientActivity extends Activity {
 
         SERVER_IP = WifiUtil.getGatewayIp(wifiManager);
 
-        //wifimmanager-ből kinyerhető információ
         StringBuilder textViewSB = new StringBuilder();
         textViewSB.append(getString(R.string.wifiState)).append(wifiManager.isWifiEnabled()).append("\n");
         textViewSB.append(getString(R.string.ipAddress)).append(WifiUtil.getMyIpAddress(wifiManager)).append("\n");
@@ -127,7 +121,7 @@ public class ClientActivity extends Activity {
 
 
     private void creatClientTherad() {
-        // egy szalat elokeszitve a communikcaciohoz
+
         clientThread = new ClientCommunicationThread(SERVER_IP, SERVERPORT);
         clientThread.setPriority(Thread.NORM_PRIORITY - 1);
         clientThread.setInformationListener(new InformationListener() {

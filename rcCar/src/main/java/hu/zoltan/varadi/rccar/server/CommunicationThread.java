@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.server;
+package hu.zoltan.varadi.rccar.server;
 
 import android.util.Log;
 
@@ -8,9 +8,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
-import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
-import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.NewDataListener;
+import hu.zoltan.varadi.rccar.util.rcCarUtil;
 import hu.varadi.zoltan.rccar.R;
 
 /**
@@ -27,7 +27,6 @@ public class CommunicationThread extends Thread {
     private NewDataListener newDataListener;
 
 
-    //letrehozasnal az input es output kiszedese a socket-bol
     public CommunicationThread(Socket clientSocket) {
         try {
             this.commThreadRun = true;
@@ -46,7 +45,6 @@ public class CommunicationThread extends Thread {
 
         while (!Thread.currentThread().isInterrupted() && commThreadRun) {
             try {
-//a szal inditasa utan ha van uj adat a akkor a newDataListener-en keresztul ertesites lesz
                 String read = input.readLine();
                 if (read != null) {
 
@@ -78,7 +76,6 @@ public class CommunicationThread extends Thread {
     }
 
     public void writeDataToOutputSream(String data) {
-        //ha informactio kozulni kell a masik oldallal
         Log.e(LOG_TAG, data);
 
         if (clientSocket == null) {
@@ -115,7 +112,6 @@ public class CommunicationThread extends Thread {
     }
 
 
-    //csak par metudus hogy el lehessen erni a beslo valtozokat
     public boolean isCommThreadRun() {
         return commThreadRun;
     }

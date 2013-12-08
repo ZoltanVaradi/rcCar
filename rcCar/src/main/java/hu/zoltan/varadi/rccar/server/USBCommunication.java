@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.server;
+package hu.zoltan.varadi.rccar.server;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -16,8 +16,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
-import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
+import hu.zoltan.varadi.rccar.util.rcCarUtil;
 import hu.varadi.zoltan.rccar.R;
 
 /**
@@ -58,7 +58,6 @@ public class USBCommunication implements Runnable {
 
     }
 
-    //usb eszkozok lekerdezese es a nulladik megnyitasa
     private void openAccessory(UsbAccessory accessory) {
         parcelFileDescriptor = usbManager.openAccessory(accessory);
 
@@ -69,7 +68,6 @@ public class USBCommunication implements Runnable {
             fileInputStream = new FileInputStream(fd);
             fileOutputStream = new FileOutputStream(fd);
 
-            // communication thread start
             Thread thread = new Thread(null, this, "DemoKit");
             thread.start();
             sendDataToUSB(rcCarUtil.COMMAND_GAZ, rcCarUtil.BASE_GAS_VALUE);
@@ -87,7 +85,6 @@ public class USBCommunication implements Runnable {
         }
     }
 
-    //megnyitott usb kapcsolat lezarasa, de elott meg kuldunk egy utolsot rajta
     private void closeAccessory() {
         try {
             if (parcelFileDescriptor != null) {
@@ -101,7 +98,6 @@ public class USBCommunication implements Runnable {
         }
     }
 
-    //usb-be iras
     public void sendDataToUSB(byte command, byte value) {
         byte[] buffer = new byte[2];
         buffer[0] = command;
@@ -118,7 +114,7 @@ public class USBCommunication implements Runnable {
         }
     }
 
-    //ha csatalkoztattak egy usb eszkozt akkor arrol jo ha jon ertesites
+
     private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
 
         @Override

@@ -1,12 +1,12 @@
-package hu.uniobuda.nik.hc4dgv.server;
+package hu.zoltan.varadi.rccar.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
 import hu.varadi.zoltan.rccar.R;
-import hu.uniobuda.nik.hc4dgv.listener.ConnectClientListener;
+import hu.zoltan.varadi.rccar.listener.ConnectClientListener;
 
 /**
  * Created by Zoltan Varadi on 2013.12.06.
@@ -22,7 +22,6 @@ public class ServerThread extends Thread {
         this.serverPort = serverPort;
     }
 
-    //csak egy bejovo kapcsolatig var vagyis max egy kliens lehet
     public void run() {
         Socket socket;
         try {

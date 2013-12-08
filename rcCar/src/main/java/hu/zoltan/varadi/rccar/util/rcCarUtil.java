@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.util;
+package hu.zoltan.varadi.rccar.util;
 
 
 import android.content.SharedPreferences;
@@ -17,8 +17,6 @@ public class rcCarUtil {
     public static final String COMMAND_SENSOR_AKKU_ANDROID = "akkuandroid";
     public static final String PrefFileName = "rcCar";
 
-
-    //a lokalis taroloba mentes es vissazallitas view specifikusan
 
     public static void saveIpAddress(SharedPreferences settings, String value) {
         SharedPreferences.Editor editor = settings.edit();

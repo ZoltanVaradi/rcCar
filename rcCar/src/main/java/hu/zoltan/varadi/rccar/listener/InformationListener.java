@@ -1,8 +1,7 @@
-package hu.uniobuda.nik.hc4dgv.listener;
+package hu.zoltan.varadi.rccar.listener;
 
 /**
- * Created by Zoltan Varadi on 2013.12.06..
- * Valamilyen informacio kozlese
+ * Created by Zoltan Varadi on 2013.12.06.
  */
 public interface InformationListener {
     public static int INFO = 0;
@@ -14,7 +13,6 @@ public interface InformationListener {
     public static int WIFI_CHANGE_ON = 10;
     public static int WIFI_CHANGE_OFF = 11;
 
-    // you can define any parameter as per your requirement
     public void information(String info, int type);
 
     public void information(int stringResourcesID, int type);

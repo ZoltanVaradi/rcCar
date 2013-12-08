@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.util;
+package hu.zoltan.varadi.rccar.util;
 
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -14,7 +14,6 @@ import java.nio.ByteOrder;
  * Created by Zoltan Varadi on 2013.12.06..
  */
 public class WifiUtil {
-    //wifi informaciok becsomagolva hogy a masik oldalt szebb legyen a kod
 
     public static String ipAddressToString(int ipAddress) {
 

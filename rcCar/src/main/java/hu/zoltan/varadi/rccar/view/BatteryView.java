@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.view;
+package hu.zoltan.varadi.rccar.view;
 
 import android.content.Context;
 import android.graphics.Canvas;

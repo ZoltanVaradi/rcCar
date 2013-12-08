@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.server;
+package hu.zoltan.varadi.rccar.server;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -27,12 +27,12 @@ import android.widget.Toast;
 
 import java.net.Socket;
 
-import hu.uniobuda.nik.hc4dgv.listener.ConnectClientListener;
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
-import hu.uniobuda.nik.hc4dgv.listener.NewDataListener;
-import hu.uniobuda.nik.hc4dgv.receiver.WifiReceiver;
-import hu.uniobuda.nik.hc4dgv.util.WifiUtil;
-import hu.uniobuda.nik.hc4dgv.util.rcCarUtil;
+import hu.zoltan.varadi.rccar.listener.ConnectClientListener;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.NewDataListener;
+import hu.zoltan.varadi.rccar.receiver.WifiReceiver;
+import hu.zoltan.varadi.rccar.util.WifiUtil;
+import hu.zoltan.varadi.rccar.util.rcCarUtil;
 import hu.varadi.zoltan.rccar.R;
 
 
@@ -110,7 +110,6 @@ public class ServerActivity extends Activity {
         return true;
     }
 
-    //fel es le (onPause) irtakzosa a nem a sensorokrol ha nem ez a akitvity van elol
     @Override
     public void onResume() {
         super.onResume();
@@ -148,7 +147,7 @@ public class ServerActivity extends Activity {
 
     //-------------------------------BroadcastReceiver----------------------------------------------
 
-//akkuhoz valtzoas lekerdezes
+
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context arg0, Intent intent) {
@@ -163,7 +162,8 @@ public class ServerActivity extends Activity {
 
 
     //-------------------------------Listener-------------------------------------------------------
-//senor esemeny lekezelo
+
+
     SensorEventListener sensorEventListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
             if (communicationThread == null) {
@@ -206,7 +206,7 @@ public class ServerActivity extends Activity {
         }
     };
 
-    // wifi valtozas leketeles, ugyan ugy mint az akku-nal csak mas formmaban leirva
+
     InformationListener wifiReceiverInformationListener = new InformationListener() {
         @Override
         public void information(String info, int type) {
@@ -227,7 +227,7 @@ public class ServerActivity extends Activity {
             this.information(getString(stringResourcesID), type);
         }
     };
-//ha informacio jon a serverThead-bol
+
     InformationListener serverTheadInformationListener = new InformationListener() {
         @Override
         public void information(final String info, int type) {
@@ -350,7 +350,6 @@ public class ServerActivity extends Activity {
         public void onClick(View v) {
 
             try {
-                //socket inditas hogy tudjon valami kliens csatalkozni wifi-n
                 if (btn.getText().toString().equals(getString(R.string.startServer))) {
 
 
@@ -376,7 +375,6 @@ public class ServerActivity extends Activity {
     };
 
     InformationListener communitcationTheadInformationListener = new InformationListener() {
-        //egyenlore ugyan azt kell csinalni mint amikor a serversocket szal el
         @Override
         public void information(String info, int type) {
             switch (type) {
@@ -428,7 +426,6 @@ public class ServerActivity extends Activity {
     //--------------------------------runnable------------------------------------------------------
 
 
-    //UI firssites nem a foszalon
     class updateUIThread implements Runnable {
         private String msg;
 
@@ -449,7 +446,6 @@ public class ServerActivity extends Activity {
     }
 
     //--------------------------------method--------------------------------------------------------
-//kiemelt metudusok hogy ne keljen ugyanazt tobbszor leirni
 
     private void enableControls(boolean enable) {
         if (enable) {

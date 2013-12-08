@@ -1,4 +1,4 @@
-package hu.uniobuda.nik.hc4dgv.receiver;
+package hu.zoltan.varadi.rccar.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
+import hu.zoltan.varadi.rccar.listener.InformationListener;
 
 /**
  * Created by Zoltan Varadi on 2013.12.07..
@@ -15,8 +15,6 @@ import hu.uniobuda.nik.hc4dgv.listener.InformationListener;
 public class WifiReceiver extends BroadcastReceiver {
 
     private InformationListener info;
-
-
 
     @Override
     public void onReceive(Context context, Intent intent) {
