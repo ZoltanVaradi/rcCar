@@ -104,8 +104,8 @@ public class BatteryView extends View {
 
         paintAndroid.setStrokeWidth(1);
         paintRcCar.setStrokeWidth(1);
-        canvas.drawText("Android", width-3, 10, paintAndroid);
-        canvas.drawText("rcCar", width-3, 25, paintRcCar);
+        canvas.drawText("Android", width - 3, 10, paintAndroid);
+        canvas.drawText("rcCar", width - 3, 25, paintRcCar);
 
         paintAndroid.setStrokeWidth(2);
         paintRcCar.setStrokeWidth(2);

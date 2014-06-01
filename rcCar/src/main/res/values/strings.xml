@@ -37,5 +37,7 @@
     <string name="serverWriteError">Sikertelen adatküldés</string>
     <string name="connectError">Hiba a kapcsolat létrehozásakor</string>
     <string name="wifiState">Wifi állapot:</string>
+    <string name="config_done">Config done\nbaudrate: %1$s, dataBits: %2$s, stopBits: %3$s, parity: %4$s, flowControl: %5$s</string>
+    <string name="connectToModem">Connect</string>
 
 </resources>

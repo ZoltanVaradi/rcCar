@@ -1,4 +1,4 @@
-package hu.zoltan.varadi.ftdi.modem;
+package hu.zoltan.varadi.lib.ftdi.modem;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -10,7 +10,7 @@ import android.widget.Toast;
 import com.ftdi.j2xx.D2xxManager;
 import com.ftdi.j2xx.FT_Device;
 
-import hu.zoltan.varadi.modemtest2.app.R;
+import hu.varadi.zoltan.rccar.R;
 
 
 public class FtdiUartDeviceHelper {
@@ -42,14 +42,14 @@ public class FtdiUartDeviceHelper {
 
     private ReadThread readThread;
 
-    private InformationListener informationListener;
+    private FtdiInformationListener informationListener;
 
 
     public FtdiUartDeviceHelper(Context parentContext, D2xxManager ftdid2xxContext) {
         init(parentContext, ftdid2xxContext);
     }
 
-    public FtdiUartDeviceHelper(Context parentContext, D2xxManager ftdid2xxContext, InformationListener listener) {
+    public FtdiUartDeviceHelper(Context parentContext, D2xxManager ftdid2xxContext, FtdiInformationListener listener) {
         this.informationListener = listener;
         init(parentContext, ftdid2xxContext);
     }
@@ -197,7 +197,7 @@ public class FtdiUartDeviceHelper {
         String toastMSG = "Config done\nbaud: " + baud + ", dataBits: " + dataBits + ", stopBits: " + stopBits + ", parity: " + parity + ", flowControl: " + flowControl;
         Resources res = deviceUARTContext.getResources();
         String text = String.format(res.getString(R.string.config_done), baud, dataBits, stopBits, parity, flowControl);
-        triggerInformationListener(text, InformationListener.DEVICE_CONNECTED);
+        triggerInformationListener(text, FtdiInformationListener.DEVICE_CONNECTED);
         //Toast.makeText(deviceUARTContext, toastMSG, Toast.LENGTH_LONG).show();
     }
 
@@ -207,16 +207,16 @@ public class FtdiUartDeviceHelper {
         public void handleMessage(Message msg) {
             if (iavailable > 0) {
                 StringBuilder sb = new StringBuilder(iavailable);
-                for(int i = 0; i<iavailable;i++){
-                    sb.append((int)readDataToText[i]+ " ");
+                for (int i = 0; i < iavailable; i++) {
+                    sb.append((int) readDataToText[i] + " ");
                 }
 //              String ss =  String.copyValueOf(readDataToText, 0, iavailable)
-                triggerInformationListener(sb.toString(), InformationListener.NEW_DATA);
+                triggerInformationListener(sb.toString(), FtdiInformationListener.NEW_DATA);
             }
         }
     };
 
-    public void setInformationListener(InformationListener listener) {
+    public void setInformationListener(FtdiInformationListener listener) {
         this.informationListener = listener;
     }
 

@@ -52,6 +52,7 @@ public class WifiUtil {
     public static String getMyIpAddress(WifiManager w) {
         return ipAddressToString(w.getConnectionInfo().getIpAddress());
     }
+
     public static String getSSID(WifiManager w) {
         return w.getConnectionInfo().getSSID();
     }
