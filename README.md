@@ -6,5 +6,5 @@ RC autót irányító android alkamazás, mely tartalmazza az autón és a kezde
 **Fejlesztés alatt álló program!**
 
 ***Fejlesztői környezet:***
-Android studio
+Android Studio
 

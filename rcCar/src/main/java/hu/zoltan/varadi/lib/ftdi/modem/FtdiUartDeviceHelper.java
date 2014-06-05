@@ -208,7 +208,7 @@ public class FtdiUartDeviceHelper {
             if (iavailable > 0) {
                 StringBuilder sb = new StringBuilder(iavailable);
                 for (int i = 0; i < iavailable; i++) {
-                    sb.append((int) readDataToText[i] + " ");
+                    sb.append(readDataToText[i]);
                 }
 //              String ss =  String.copyValueOf(readDataToText, 0, iavailable)
                 triggerInformationListener(sb.toString(), FtdiInformationListener.NEW_DATA);

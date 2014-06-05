@@ -19,8 +19,9 @@ import hu.zoltan.varadi.lib.ftdi.modem.FtdiUartDeviceHelper;
 public class MainActivity extends Activity {
 
     private static final int SEEKBAR_DEFAULT_VALUE = 25;
-    private static final byte KORMANY = 0X01;
-    private static final byte GAZ = 0X02;
+    private static final byte KORMANY = 0x64;
+    private static final byte GAZ = 0x65;
+    private static final byte ECHO = 0x66;
 
     private Button connectFunction;
     private Button sendMessage;
@@ -29,6 +30,8 @@ public class MainActivity extends Activity {
     private SeekBar sbGaz;
     private SeekBar sbkorm;
     private FtdiDeviceInputAdapter ftdiDeviceInputAdapter;
+
+    private StringBuilder echoMessage = new StringBuilder(1024);
 
 
     FtdiUartDeviceHelper ftdiUartDeviceHelper;
@@ -79,6 +82,9 @@ public class MainActivity extends Activity {
                 connectFunction.setEnabled(false);
             } else if (type == FtdiInformationListener.NEW_DATA) {
 
+
+                echoMessage.append(message);
+                checkEchoMessage();
                 ftdiDeviceInputAdapter.addItem(message);
 
                 ftdiDeviceInputAdapter.notifyDataSetChanged();
@@ -108,6 +114,18 @@ public class MainActivity extends Activity {
         }
     };
 
+    private void checkEchoMessage() {
+
+        for (int i = 0; i < echoMessage.length(); i++) {
+            int echoIndex = echoMessage.indexOf("$echo");
+            if (echoIndex != -1) {
+                echoMessage.delete(0, echoMessage.length());
+                ftdiUartDeviceHelper.sendMessage(ECHO, (byte) 0x02);
+            }
+
+        }
+
+    }
 
     @Override
     protected void onStop() {
